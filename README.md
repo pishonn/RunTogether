@@ -17,7 +17,7 @@ Detailed explanations of the original project and the development process are pr
 [GitHub](https://github.com/pishonn/Web-Programing-Team-10)  
 [Notion](https://tar-beast-134.notion.site/a69a754afce0477baeaca68326450183)  
 <details>
-  <summary>Existing Features (기존 기능)</summary>
+  <summary>기존 기능들 (xisting Features)</summary>
   
   ### <sub>사용자 위치 표시 (Displaying User Location)</sub>
   <sub>- Google Maps API를 사용하여 사용자 위치와 지도 정보를 받아옵니다.</sub>
