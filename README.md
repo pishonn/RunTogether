@@ -6,18 +6,18 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 
 ## Overview
-html/css/javascript 와 Java SpringBoot 이용해 만든 런닝 웹페이지입니다.
-html/css/javascript 로 한정적인 기능만 구현되어 있던 기존의 프론트엔드 프로젝트를 백엔드까지 확장시켜 완성도를 높였습니다.
-기존 프로젝트에 대한 설명과 개발 과정은 아래 링크에 상세히 기재되어 있습니다. 
+html/css/javascript 와 Java SpringBoot 이용해 만든 런닝 웹페이지입니다.  
+html/css/javascript 로 한정적인 기능만 구현되어 있던 기존의 프론트엔드 프로젝트를 백엔드까지 확장시켜 완성도를 높였습니다.  
+기존 프로젝트에 대한 설명과 개발 과정은 아래 링크에 상세히 기재되어 있습니다.    
 
-This is a running web page created using HTML/CSS/JavaScript and Java Spring Boot. 
-I extended the original frontend project, which was limited to functionalities implemented with HTML/CSS/JavaScript, to the backend, enhancing its overall completeness. 
-Detailed explanations of the original project and the development process are provided in the link below.
+This is a running web page created using HTML/CSS/JavaScript and Java Spring Boot.  
+I extended the original frontend project, which was limited to functionalities implemented with HTML/CSS/JavaScript, to the backend, enhancing its overall completeness.  
+Detailed explanations of the original project and the development process are provided in the link below.  
+  
+[GitHub](https://github.com/pishonn/Web-Programing-Team-10)  
+[Notion](https://tar-beast-134.notion.site/a69a754afce0477baeaca68326450183)  
 
-[GitHub](https://github.com/pishonn/Web-Programing-Team-10)
-[Notion](https://tar-beast-134.notion.site/a69a754afce0477baeaca68326450183)
-
-### Updates
+## Updates
 
 - **UI 디자인 강화 (Enhanced UI Design)**
   - 프론트엔드 디자인이 개선되었습니다.
