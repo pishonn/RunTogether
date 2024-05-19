@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>가입하기</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #button {
+            display: block;
+            padding: 10px 30px;
+            width: 150px;
+            margin: 0 auto; /* 중앙 정렬 */
+            margin-top: 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="signup">
+            <button type="button" th:onclick="|window.location.href='@{/login}'|" class="back-button2">
+                <img src="./img/arrow.png">
+            </button>
+            <h2>가입하기</h2>
+            <form name="registerForm" action="" th:action="@{/register}" th:object="${user_info}" method="post" onsubmit="return verifyForm()">
+                <input type="text" id="name" name="name" th:field="*{name}" placeholder="닉네임" required/>
+                <input type="text" id="userId" name="userId" th:field="*{userId}" placeholder="아이디" required/>
+                <input type="password" id="pw" name="pw" th:field="*{pw}" placeholder="비밀번호" required/>
+                <input type="email" id="email" name="email" th:field="*{email}" placeholder="이메일" required/>                
+                <input type="submit" id="button" value="계정 생성">
+            </form>
+        </div>
+    </div>
+    <script th:if="${message}">
+        alert('[[${message}]]');
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>
