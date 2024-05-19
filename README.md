@@ -19,6 +19,8 @@ Detailed explanations of the original project and the development process are pr
 <details>
   <summary>Existing Features</summary>
   
+  <small>
+  
   ### 사용자 위치 표시 (Displaying User Location)
   - Google Maps API를 사용하여 사용자 위치와 지도 정보를 받아옵니다.
   - Fetch user location and map data using Google Maps API.
@@ -51,7 +53,9 @@ Detailed explanations of the original project and the development process are pr
   - 기록 페이지에서 날짜에 따라 이동한 장소들과 점수 내역 등을 확인할 수 있습니다.
   - View traveled places and score history by date on the record page.
   
+  </small>
 </details>  
+
 ## Updates
 
 - **UI 디자인 강화 (Enhanced UI Design)**
