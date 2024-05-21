@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 상세</title>
+
+    <script>
+        function confirmDelete(postId) {
+            if (confirm("정말 삭제하시겠습니까?")) {
+                document.location.href = '/delete/' + postId;
+            }
+        }
+
+        function confirmDeleteComment(commentId) {
+            if (confirm("정말 댓글을 삭제하시겠습니까?")) {
+                document.location.href = '/deleteComment/' + commentId;
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 50%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 50px;
+        }
+        h1 {
+            color: #333;
+            font-size: 30px;
+        }
+        .date {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .content {
+            color: #444;
+            font-size: 20px;
+        }
+
+        .button {
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 20px;
+        }
+        .back-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .delete-button {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .comments {
+            margin-top: 40px;
+        }
+        .comment-form {
+            margin-bottom: 30px;
+        }
+        .comment-form textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+        .comment {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+        .comment .writer {
+            font-weight: bold;
+        }
+        .comment .date {
+            font-size: 12px;
+            color: #999;
+        }
+        .comment .delete-comment {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 th:text="${post.title}">게시글 제목</h1>
+        <p class="date" th:text="${#temporals.format(post.date, 'yyyy-MM-dd HH:mm:ss')}">게시일</p>
+        <p class="content" th:text="${post.content}">게시글 내용</p>
+
+        <a href="/board" class="button back-button">게시판 목록으로</a>
+
+        <button th:onclick="'confirmDelete(' + ${post.id} + ')'" class="button delete-button">삭제</button>
+
+        <!-- 댓글 목록 -->
+        <div class="comments">
+            <h2>댓글</h2>
+            <div th:each="comment : ${post.comments}">
+                <div class="comment">
+                    <span class="delete-comment" th:onclick="'confirmDeleteComment(' + ${comment.id} + ')'">X</span>
+                    <p class="writer" th:text="${comment.writer}">작성자</p>
+                    <p class="date" th:text="${#temporals.format(comment.date, 'yyyy-MM-dd HH:mm:ss')}">댓글 날짜</p>
+                    <p class="content" th:text="${comment.content}">댓글 내용</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 댓글 작성 폼 -->
+        <div class="comment-form">
+            <form th:action="'/comment/' + ${post.id}" method="post" th:object="${commentDto}">
+                <textarea th:field="*{content}" placeholder="댓글을 입력하세요"></textarea>
+                <button type="submit" class="button back-button">댓글 작성</button>
+            </form>
+        </div>
+    </div>
+</body>
+<script th:if="${message}">
+    alert('[[${message}]]');
+</script>
+</html>

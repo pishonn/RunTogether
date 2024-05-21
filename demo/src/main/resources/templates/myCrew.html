@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>내 크루</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+        }
+
+        .sidebar img {
+            width: 15px;
+            margin: 0 auto;
+        }
+
+        .sidebar-container {
+            width: 40px;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            height: 40px;
+            transition: height 0.3s ease;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-container:hover .sidebar {
+            height: var(--hover-height, 100px);
+        }
+
+        .sidebar button {
+            background-color: transparent;
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .sidebar-container:hover button {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .main-icon {
+            margin-bottom: 30px;
+        }
+        .crew-info {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .photo-grid img {
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .photo-grid img:hover {
+            border: 2px solid blue;
+        }
+
+        .crew-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        .crew-table th,
+        .crew-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            text-align: center;
+        }
+        .profile-img {
+            overflow: hidden;
+            max-width: 200px;
+            max-height: 200px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            margin: 0 auto;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-img img {
+            max-width: initial;
+            max-height: initial;
+            object-fit: cover; /* 이미지 확대 및 잘려 보이게 하기 */
+            object-position: center; /* 중심에 맞추기 */
+        
+        }
+        .info {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        
+        #button {
+            display: inline-block;
+            padding: 10px 30px;
+            width: 150px;
+            margin-top: 0px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 20px;
+        }
+
+        .profile-img {
+            cursor: pointer;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 50%;
+            text-align: left;
+        }
+
+        h2 {
+            text-align: left;
+        }
+
+        .close {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .search-form {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .search-form label {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap; /* 텍스트를 한 줄로 유지 */
+        }
+
+        .search-form input,
+        .search-form select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .search-results {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .photo-grid img {
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .photo-grid img:hover {
+            border: 2px solid blue;
+        }
+        
+        .back-button2 {
+            position: relative;
+            float: right;
+        }
+        .title {
+            margin-top: 10px;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #ccc; /* 회색 구분선 */
+            margin: 20px 0; /* 상하 간격 */
+        }
+
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            margin-right: 20px;
+        }
+
+        .ranking-table th, .ranking-table td {
+            text-align: center;
+            border: none;
+            padding: 8px;
+        }
+
+        .ranking-table th {
+            display: none;
+        }
+
+        .ranking-table td:first-child {
+            text-align: center;
+            width: 40px;
+        }
+        
+        .member-profile-img {
+            overflow: hidden;
+            max-width: 50px;
+            max-height: 50px;
+            width: 77px;
+            height: 77px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            background-size: cover;
+            background-position: center;
+            align-items: center;
+            justify-content: center;
+        }
+        .member-profile-img img {
+            max-width: initial;
+            max-height: initial;
+            object-fit: cover; /* 이미지 확대 및 잘려 보이게 하기 */
+            object-position: center; /* 중심에 맞추기 */
+        }
+        .ranking-section {
+            display: none;
+        }
+
+        .ranking-section.active {
+            display: block;
+        }
+        
+        /* #chatRoomBody의 스크롤 바 스타일 */
+        #chatRoomBody::-webkit-scrollbar {
+            width: 8px; /* 스크롤 바의 너비 */
+        }
+
+        #chatRoomBody::-webkit-scrollbar-track {
+            background: transparent; /* 트랙의 배경색 */
+        }
+
+        #chatRoomBody::-webkit-scrollbar-thumb {
+            background: rgba(136, 136, 136, 0.5); /* 핸들의 배경색을 투명하게 */
+        }
+        
+        #chatRoomBody::-webkit-scrollbar-thumb:hover {
+            background: rgba(85, 85, 85, 0.5); /* 핸들에 마우스를 올렸을 때의 배경색을 투명하게 */
+        }
+
+        #chatRoom {
+            position: absolute;
+            top: 0;
+            left: -100%; /* 처음에는 왼쪽으로 완전히 슬라이드 */
+            width: 100%;
+            height: 100%;
+            transition: left 0.3s ease; /* left의 변화를 애니메이션으로 적용 */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            border-radius: 50px;
+            background-color: white;
+            overflow: hidden;
+        }
+        
+        #chatRoom.open {
+            left: 0; /* 열린 상태에서는 left를 0으로 설정 */
+        }
+        
+        #chatRoomHeader {
+            padding: 5px;
+            background: #007bff;
+            color: white;
+        }
+        
+        #chatRoomBody {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            scroll-behavior: smooth; /* 스크롤 부드럽게 */
+        }
+        
+        #chatRoomFooter {
+            padding: 10px;
+            background: #ddd;
+        }
+        
+        #chatRoomFooter input {
+            width: 90%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 50px;
+        }
+        
+        #chatRoomFooter button {
+            padding: 5px;
+            background: transparent;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        
+        #chatRoomFooter button img {
+            width: 20px; /* 원하는 크기로 설정 */
+            height: 20px; /* 원하는 크기로 설정 */
+        }
+        
+        .chat-message {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+        
+        .chat-message .message-content {
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 20px;
+            background-color: #f1f1f1;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .chat-message .profile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 10px;
+        }
+        
+        .chat-message .profile img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+        
+        .chat-message .profile span {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .chat-message.right .message-content {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+            order: 2; /* 오른쪽 정렬을 위해 추가 */
+        }
+        
+        .chat-message.right .profile {
+            order: 1; /* 오른쪽 정렬을 위해 추가 */
+        }
+        
+        .chat-message.left .message-content {
+            margin-right: auto;
+            order: 2; /* 왼쪽 정렬을 위해 추가 */
+        }
+        
+        .chat-message.left .profile {
+            order: 1; /* 왼쪽 정렬을 위해 추가 */
+        }
+        
+        
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div th:if="${crew != null}">
+            <div id="chatRoom">
+                <div id="chatRoomHeader">
+                    <button onclick="toggleChatRoom()" class="back-button2" style="margin-top: 50px; margin-right: 10px; filter: invert(100%);">
+                        <img src="./img/arrow.png">
+                    </button>
+                    <h2 style="margin-left: 20px; margin-top: 50px">💬</h2>
+                </div>
+                <div id="chatRoomBody">
+                    <!-- 채팅 내용이 표시될 부분 -->
+                </div>
+                <div id="chatRoomFooter">
+                    <input type="text" id="chatMessage" placeholder="Enter 키로 메세지 전송">
+                </div>
+            </div>
+        
+            <input type="hidden" id="crewId" th:value="${crew.id}">
+            <img id="userProfileImage" th:src="@{/img/default-profile{profileImage}.jpg(profileImage=${userData.profileImage})}" style="display: none;">
+            <span id="userName" th:text="${userData.name}" style="display: none;"></span>
+        </div>
+
+
+        <button type="button" th:onclick="|window.location.href='@{/}'|" class="back-button2"><img src="./img/arrow.png"></button>
+        <div class="sidebar-container">
+            <div class="sidebar">
+                <img style="margin-top: 14px;" class="main-icon" src="./img/side-menu.png">
+                <button th:if="${crew != null}" th:onclick="|window.location.href='@{/crewProfile/{id}(id=${crew.id})}'|">
+                    <img src="./img/info.png">
+                </button>
+                <button th:if="${crew == null}" onclick="noCrewAlert()">
+                    <img src="./img/info.png">
+                </button>
+                <button th:if="${crew != null}" style="margin-top: -18px;" onclick="toggleChatRoom()">
+                    <img src="./img/chat.png">
+                </button>
+                <button th:if="${crew == null}" style="margin-top: -18px;" onclick="noCrewAlert()">
+                    <img src="./img/chat.png">
+                </button>
+                <button style="margin-top: -18px;" onclick="window.location.href='/approvalJoinRequest'" th:if="${crew != null && crew.admin == userData}">
+                    <img src="./img/join-request.png">
+                </button>
+                <button style="margin-top: -18px;" onclick="window.location.href='/editCrewProfile'" id="settings-btn" th:if="${crew != null && crew.admin == userData}">
+                    <img src="./img/setting.png">
+                </button>
+            </div>
+        </div>
+
+        <h1 class="title" th:text="${crew != null ? crew.name : '크루가 없습니다.'}"></h1>
+
+        <div th:if="${crew != null}">
+            <div class="profile-img" id="profileImgContainer">
+                <img th:src="@{/img/default-crew-profile{profileImage}.jpg(profileImage=${crew.profileImage})}" id="profilePicture" class="profile-img">
+            </div>
+
+            <div class="crew-info">
+                <b>
+                    <p><span id="crew-capacity" th:text="${memberCount} + '명' + ' / ' + ${crew.capacity} + '명'"></span></p>
+                    <p><span id="crew-region" th:text="${crew.region}"></span></p>
+                    <p><span id="crew-total-points" th:text="${totalPoints} + ' point'"></span></p>
+                    <p><span id="crew-total-distance" th:text="${#numbers.formatDecimal(totalDistance, 1, 2) + ' km'}"></span></p>
+                </b>
+            </div>
+            <hr class="divider"> <!-- 구분선 -->
+            <table class="ranking-table">
+                <tr>
+                    <th>프로필 사진</th>
+                    <th>이름</th>
+                    <th>점수</th>
+                    <th>이동 거리</th>
+                </tr>
+                <tr th:if="${crew.admin != null}">
+                    <b>관리자</b>
+                    <td>
+                        <a th:href="@{/profile/{id}(id=${crew.admin.id})}">
+                            <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${crew.admin.profileImage})}" class="member-profile-img"/>
+                        </a>
+                    </td>
+                    <td th:text="${crew.admin.name}"></td>
+                    <td th:text="${crew.admin.totalPoints + ' point'}"></td>
+                    <td th:text="${#numbers.formatDecimal(crew.admin.totalDistance, 1, 2) + ' km'}"></td>
+                </tr>
+                <tr th:each="member : ${crew.members}" th:unless="${member.id == crew.admin.id}">
+                    <hr class="divider"> <!-- 구분선 -->
+                    <b>멤버</b>
+                    <td>
+                        <a th:href="@{/profile/{id}(id=${member.id})}">
+                            <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${member.profileImage})}" class="member-profile-img"/>
+                        </a>
+                    </td>
+                    <td th:text="${member.name}"></td>
+                    <td th:text="${member.totalPoints + ' point'}"></td>
+                    <td th:text="${#numbers.formatDecimal(member.totalDistance, 1, 2) + ' km'}"></td>
+                </tr>
+            </table>
+            
+        </div>
+
+        <div th:if="${crew == null}">
+            <p style="color: darkgray; font-size: 13px">아직 크루에 소속되어 있지 않습니다.</p>
+            <button id="button" onclick="openSearchModal()">크루 검색</button>
+            <button id="button" onclick="window.location.href='/board?type=crew'">크루 모집 게시판</button>
+            <button id="button" onclick="window.location.href='/createCrew'">크루 생성</button>
+        </div>
+
+        <div id="searchModal" class="modal" th:if="${crew == null}">
+            <div class="modal-content">
+                <span class="close" onclick="closeSearchModal()">&times;</span>
+                <h2>크루 검색</h2>
+                <form id="searchForm" class="search-form" onsubmit="event.preventDefault(); searchCrew();">
+                    <label>
+                        크루명:
+                        <input placeholder="🔍 검색어 입력 후 Enter" type="text" id="crewName" name="crewName">
+                    </label>
+                    <label>
+                        지역:
+                        <select id="region" name="region">
+                            <option value="">선택</option>
+                            <option value="서울">서울</option>
+                            <option value="부산">부산</option>
+                            <option value="대구">대구</option>
+                        </select>
+                    </label>
+                    <label>
+                        가입 가능만 표시:
+                        <input type="checkbox" id="joinable" name="joinable">
+                    </label>
+                </form>
+                <hr class="divider"> <!-- 구분선 -->
+
+                <div id="searchResults" class="search-results"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function openSearchModal() {
+            // 검색 폼 초기화
+            document.getElementById('crewName').value = '';
+            document.getElementById('region').selectedIndex = 0; // 첫 번째 옵션 선택
+            document.getElementById('joinable').checked = false; // 체크 해제
+        
+            // 검색 결과 초기화
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '';
+        
+            document.getElementById('searchModal').style.display = 'block';
+        }
+        
+        
+        function closeSearchModal() {
+            document.getElementById('searchModal').style.display = 'none';
+        }
+        
+        function searchCrew() {
+            const crewName = document.getElementById('crewName').value;
+            const region = document.getElementById('region').value;
+            const joinable = document.getElementById('joinable').checked;
+        
+            if (!crewName && !region) {
+                alert('크루 이름 또는 지역을 선택하세요.');
+                return;
+            }
+        
+            fetch('/searchCrew', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ crewName, region, joinable })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = ''; // 검색 결과를 새로 고침
+        
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<p>검색 결과가 없습니다.</p>';
+                } else {
+                    let tableHTML = '<table><tr><th>프로필 사진</th><th>크루 이름</th><th>지역</th><th>정원</th><th>가입 신청</th></tr>';
+                    data.forEach(crew => {
+                        tableHTML += `<tr>
+                            <td><img src="${crew.profileImage}" alt="크루 프로필" width="50"></td>
+                            <td>${crew.name}</td>
+                            <td>${crew.region}</td>
+                            <td>${crew.capacity}</td>
+                            <td><button onclick="joinCrew(${crew.id})">가입 신청</button></td>
+                        </tr>`;
+                    });
+                    tableHTML += '</table>';
+                    resultsDiv.innerHTML = tableHTML;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = '<p>검색 결과를 가져오는 중 오류가 발생했습니다.</p>';
+            });
+        }
+        
+        function joinCrew(crewId) {
+            alert(`크루 ID: ${crewId}에 가입 신청되었습니다.`);
+        }
+        
+        var element = document.getElementById('openSearchButton');
+        if (element) {
+            element.onclick = openSearchModal;
+        }
+
+        var sidebar = document.querySelector('.sidebar');
+        function adjustSidebarHoverPadding() {
+            const buttonCount = sidebar.querySelectorAll('button').length;
+
+            // 버튼 수에 따라 패딩 크기 결정
+            let paddingSize;
+            if (buttonCount == 4) {
+                paddingSize = 160; // 3개의 버튼
+            } else {
+                paddingSize = 100; // 기본값
+            }
+
+            // 호버 시의 패딩 적용
+            sidebar.style.setProperty('--hover-height', `${paddingSize}px`);
+        }
+
+            // 패딩 크기를 조정하기 위해 DOM 로드 후 함수 실행
+        adjustSidebarHoverPadding();
+
+        function noCrewAlert() {
+            alert('아직 크루에 소속되어 있지 않습니다.');
+        }
+        
+
+        function toggleChatRoom() {
+            const chatRoom = document.getElementById('chatRoom');
+            chatRoom.classList.toggle('open'); // open 클래스를 토글
+        }
+    
+    </script>
+    <script th:if="${message}">
+        alert('[[${message}]]');
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script>
+        let stompClient = null;
+        let currentUserName = null;
+        let crewId = null;
+
+        function connect() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, onConnected, onError);
+        }
+
+        function onConnected() {
+            currentUserName = document.getElementById('userName').textContent;
+            crewId = document.getElementById('crewId').value;
+
+            console.log('Connected to WebSocket');
+            console.log('Current user name set to:', currentUserName);
+            console.log('Crew ID set to:', crewId);
+
+            stompClient.subscribe('/topic/public', onMessageReceived);
+
+            loadChatHistory();
+        }
+
+        function onError(error) {
+            console.error('Could not connect to WebSocket server. Please refresh this page to try again!', error);
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('chatMessage');
+            const messageContent = messageInput.value.trim();
+            const profileImage = document.getElementById('userProfileImage').getAttribute('src');
+            const crewId = document.getElementById('crewId').value;
+
+            console.log('Sending message:', messageContent, 'from user:', currentUserName, 'with profile image:', profileImage, 'to crew:', crewId);
+
+            if (messageContent && stompClient) {
+                const chatMessage = {
+                    content: messageContent,
+                    sender: currentUserName,
+                    profileImage: profileImage,
+                    crewId: crewId // DTO에 맞게 변경
+                };
+                stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
+                messageInput.value = '';
+            }
+        }
+
+        function onMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+            console.log('Message received:', message);
+            displayMessage(message);
+        }
+
+        function displayMessage(message) {
+            console.log('Displaying message:', message); // 디버깅용
+
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message');
+
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('message-content');
+            messageContent.textContent = message.content;
+
+            if (message.sender === currentUserName) {
+                messageElement.classList.add('right');
+                messageElement.appendChild(messageContent);
+            } else {
+                messageElement.classList.add('left');
+
+                const profileElement = document.createElement('div');
+                profileElement.classList.add('profile');
+
+                const profileImg = document.createElement('img');
+                profileImg.src = message.profileImage;
+                profileElement.appendChild(profileImg);
+
+                const profileName = document.createElement('span');
+                profileName.textContent = message.sender;
+                profileElement.appendChild(profileName);
+
+                messageElement.appendChild(profileElement);
+                messageElement.appendChild(messageContent);
+            }
+
+            const chatRoomBody = document.getElementById('chatRoomBody');
+            if (chatRoomBody) {
+                chatRoomBody.appendChild(messageElement);
+                chatRoomBody.scrollTop = chatRoomBody.scrollHeight;
+            } else {
+                console.error('chatRoomBody element not found');
+            }
+        }
+
+        function loadChatHistory() {
+            const crewId = document.getElementById('crewId').value;
+            console.log('Loading chat history for crew:', crewId); // 디버깅용
+
+            fetch(`/chat/history/${crewId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Chat history loaded:', data); // 디버깅용
+                    if (Array.isArray(data)) {
+                        data.forEach(message => {
+                            displayMessage(message);
+                        });
+                    } else {
+                        console.error('Unexpected data format:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading chat history:', error);
+                });
+        }
+
+        window.onload = function() {
+            const crewIdElement = document.getElementById('crewId');
+            if (crewIdElement && crewIdElement.value) {
+                connect();
+        
+                const chatMessageInput = document.getElementById('chatMessage');
+                if (chatMessageInput) {
+                    chatMessageInput.addEventListener('keydown', function(event) {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            sendMessage();
+                        }
+                    });
+                } else {
+                    console.error('chatMessage input element not found');
+                }
+            } else {
+                console.log('No crew ID found, skipping WebSocket connection');
+            }
+        };
+        
+
+
+
+    </script>
+
+</body>
+
+</html>

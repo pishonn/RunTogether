@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>프로필 페이지</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .profile-img {
+            overflow: hidden;
+            max-width: 200px;
+            max-height: 200px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            margin: auto;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-img img {
+            max-width: initial;
+            max-height: initial;
+            object-fit: cover; /* 이미지 확대 및 잘려 보이게 하기 */
+            object-position: center; /* 중심에 맞추기 */
+        
+        }
+        .info {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        
+        #button {
+            display: inline-block;
+            padding: 10px 30px;
+            width: 150px;
+            margin-top: 0px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 20px;
+        }
+
+        .profile-img {
+            cursor: pointer;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .photo-grid img {
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .photo-grid img:hover {
+            border: 2px solid blue;
+        }
+        
+        .back-button2 {
+            position: relative;
+            float: right;
+        }
+        .title {
+            margin-top: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <button type="button" th:onclick="|window.location.href='@{/}'|" class="back-button2"><img src="./img/arrow.png"></button>
+        <h1 class="title">나의 프로필</h1>
+        <div class="profile-img" id="profileImgContainer">
+            <img id="profilePicture" alt="프로필 사진" class="profile-img" onclick="openModal()">
+        </div>
+    
+        <div id="photoModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <div class="photo-grid">
+                    <img src="./img/default-profile1.jpg" onclick="selectPhoto(1)">
+                    <img src="./img/default-profile2.jpg" onclick="selectPhoto(2)">
+                    <img src="./img/default-profile3.jpg" onclick="selectPhoto(3)">
+                    <img src="./img/default-profile4.jpg" onclick="selectPhoto(4)">
+                    <img src="./img/default-profile5.jpg" onclick="selectPhoto(5)">
+                    <img src="./img/default-profile6.jpg" onclick="selectPhoto(6)">
+                </div>
+            </div>
+        </div>
+        <div class="info">
+            <b><p>닉네임 : <span th:text="${user.name}"></span></p></b>
+            <b><p>랭킹 : #<span th:text="${rank}"></span></p></b>
+            <b><p>총 점수 : <span th:text="${user.totalPoints}"></span></p></b>
+            <b><p>총 이동거리 : <span th:text="${#numbers.formatDecimal(user.totalDistance, 1, 2)}"></span></p></b>
+            <b><p>크루 : 
+                <span th:if="${user.crew != null}" th:text="${user.crew.name}"></span>
+                <span th:if="${user.crew == null}"></span>
+            </p></b>
+        </div>
+        <a th:onclick="|window.location.href='@{/editProfile}'|" id="button">정보 수정</a>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        function openModal() {
+            document.getElementById("photoModal").style.display = "block";
+        }
+        
+        function closeModal() {
+            document.getElementById("photoModal").style.display = "none";
+        }
+        
+    
+        function selectPhoto(photoNumber) {
+            document.getElementById("profilePicture").src = `./img/default-profile${photoNumber}.jpg`;
+        
+            // 프로필 이미지 번호를 서버에 전송
+            fetch('/updateProfileImg', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // 서버에서 단일 숫자를 올바르게 인식할 수 있도록 데이터 포맷을 변경
+                body: JSON.stringify(photoNumber)
+            }).then(response => {
+                if (response.ok) {
+                    alert('프로필 사진이 업데이트되었습니다.');
+                } else {
+                    alert('프로필 사진 업데이트에 실패했습니다.');
+                }
+            });
+        
+            closeModal();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('/getMyProfileImg')
+                .then(response => response.json())
+                .then(photoNumber => {
+                    document.getElementById("profilePicture").src = `./img/default-profile${photoNumber}.jpg`;
+                });
+        });
+        
+
+    </script>
+</body>
+
+</html>

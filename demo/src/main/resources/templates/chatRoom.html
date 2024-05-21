@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>채팅방</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+
+        #chatRoom {
+            position: absolute; /* container 내부에서 위치를 절대 위치로 설정 */
+            top: 0;
+            left: 0;
+            width: 0; /* 처음에는 너비가 0으로 설정되어 표시되지 않음 */
+            height: 100%; /* container의 높이만큼 설정 */
+            transition: width 0.3s ease; /* 너비의 변화를 애니메이션으로 적용 */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            border-radius: 50px; 
+            background-color: white; 
+        }
+        
+        #chatRoom.open {
+            width: 100%; /* 열린 상태에서는 container의 너비에 맞도록 설정 */
+        }
+        
+        
+
+        #chatRoomHeader {
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            text-align: center;
+        }
+
+        #chatRoomBody {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        #chatRoomFooter {
+            padding: 10px;
+            background: #ddd;
+        }
+
+        #chatRoomFooter input {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #chatRoomFooter button {
+            width: 18%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div id="chatRoom">
+            <div id="chatRoomHeader">
+                <h2>Chat Room</h2>
+                <button onclick="toggleChatRoom()">Close</button>
+            </div>
+            <div id="chatRoomBody">
+                <!-- 채팅 내용이 표시될 부분 -->
+            </div>
+            <div id="chatRoomFooter">
+                <input type="text" id="chatMessage" placeholder="메시지를 입력하세요">
+                <button onclick="sendMessage()">전송</button>
+            </div>
+        </div>
+
+      
+    </div>
+
+    <script>
+        
+        
+
+        function sendMessage() {
+            const messageInput = document.getElementById('chatMessage');
+            const message = messageInput.value.trim();
+            if (message !== '') {
+                // 메시지 전송 로직 구현
+                messageInput.value = '';
+            }
+        }
+        
+    </script>
+    <script th:if="${message}">
+        alert('[[${message}]]');
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script>
+        let stompClient = null;
+
+        function connect() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, onConnected, onError);
+        }
+
+        function onConnected() {
+            stompClient.subscribe('/topic/public', onMessageReceived);
+        }
+
+        function onError(error) {
+            console.error('Could not connect to WebSocket server. Please refresh this page to try again!', error);
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('chatMessage');
+            const messageContent = messageInput.value.trim();
+
+            if(messageContent && stompClient) {
+                const chatMessage = {
+                    content: messageContent
+                };
+                stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
+                messageInput.value = '';
+            }
+        }
+
+        function onMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message');
+            messageElement.innerText = message.content;
+            document.getElementById('chatRoomBody').appendChild(messageElement);
+        }
+
+        window.onload = connect;
+    </script>
+
+</body>
+
+</html>

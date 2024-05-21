@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <context:component-scan base-package="com.example.demo"></context:component-scan>
+    <!-- bean definitions here -->
+    <!-- <bean id="Car" class="com.example.demo.Car"></bean>
+    <bean id="carFrame" class="com.example.demo.CarFrame"></bean>
+
+    <bean id="BMWWheel" class="com.example.demo.BMWWheel"></bean>
+    <bean id="BMWSteer" class="com.example.demo.BMWSteer"></bean>
+    <bean id="BMWSeat" class="com.example.demo.BMWSeat"></bean>
+
+    <bean id="HMWheel" class="com.example.demo.HMWheel"></bean>
+    <bean id="HMSteer" class="com.example.demo.HMSteer"></bean>
+    <bean id="HMSeat" class="com.example.demo.HMSeat"></bean> -->
+</beans>
