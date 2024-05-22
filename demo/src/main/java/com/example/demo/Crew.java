@@ -1,4 +1,5 @@
 package com.example.demo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,9 @@ public class Crew {
 
     @OneToMany(mappedBy = "crew", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<User_info> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "crew", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<JoinRequest> joinRequests = new ArrayList<>();
 
     // getter 및 setter 추가
 
@@ -126,7 +130,6 @@ public class Crew {
         return members.size();
     }
 
-
     public boolean isFull() {
         return members.size() >= capacity;
     }
@@ -154,7 +157,26 @@ public class Crew {
         }
         return totalDistance;
     }
+
     
+
+    public List<JoinRequest> getJoinRequests() {
+        return joinRequests;
+    }
+
+    public void setJoinRequests(List<JoinRequest> joinRequests) {
+        this.joinRequests = joinRequests;
+    }
+
+    public void addJoinRequest(JoinRequest joinRequest) {
+        this.joinRequests.add(joinRequest);
+    }
+
+    public void removeJoinRequest(JoinRequest joinRequest) {
+        this.joinRequests.remove(joinRequest);
+    }
+
+    @Override
     public String toString() {
         return "Crew{" +
                 "id=" + id +

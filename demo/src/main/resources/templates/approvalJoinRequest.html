@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>가입 신청 관리</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 기본적인 스타일들 */
+        .container {
+            width: 400px;
+            text-align: center;
+            justify-content: center;
+        }
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+       
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        .ranking-table th, .ranking-table td {
+            text-align: center;
+            border: none;
+            padding: 8px;
+        }
+
+        .ranking-table th {
+        }
+        .back-button2 {
+            position: relative;
+            float: right;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #ccc; /* 회색 구분선 */
+            margin: 20px 0; /* 상하 간격 */
+        }
+        
+        #button {
+            background-color: #007bff;
+            color: white;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <button type="button" th:onclick="|window.location.href='@{/}'|" class="back-button2"><img src="./img/arrow.png"></button>
+
+        <h2 style="text-align: center; margin-top: 40px;">가입 신청 관리</h2>
+        <hr class="divider">
+        <table class="ranking-table">
+            <thead th:if="${!joinRequests.isEmpty()}">
+                <tr>
+                    <th></th>
+                    <th style="font-size: 15px; font-weight: lighter;">닉네임</th>
+                    <th style="font-size: 15px; font-weight: lighter;">가입 신청 날짜</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${joinRequests.isEmpty()}">
+                    <td colspan="4" style="color: gray;">가입을 신청한 유저가 없습니다.</td>
+                </tr>
+                <tr th:each="request : ${joinRequests}">
+                    <td>
+                        <a th:href="@{/profile/{id}(id=${request.user.Id})}">
+                            <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${request.user.profileImage})}" alt="프로필 사진" class="profile-img">
+                        </a>
+                    </td>
+                    <td><a th:href="@{/profile/{id}(id=${request.user.id})}" th:text="${request.user.name}" style="text-decoration: none; color: black;">이름</a></td>
+                    <td th:text="${#temporals.format(request.date, 'yyyy-MM-dd')}">가입 신청 날짜</td>
+                    <td class="button-container">
+                        <form th:action="@{/approveJoinRequest/{id}(id=${request.id})}" method="post">
+                            <button type="submit" id="button" style="color: white;">승인</button>
+                        </form>
+                        <form th:action="@{/rejectJoinRequest/{id}(id=${request.id})} " method="post">
+                            <button type="submit" id="button" style="color: white; background-color: red;">거절</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+<script th:if="${message}">
+    alert('[[${message}]]');
+</script>
+</html>

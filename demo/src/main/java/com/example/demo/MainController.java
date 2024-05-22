@@ -25,6 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
 
 
 @Controller
@@ -43,6 +44,9 @@ public class MainController {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private JoinRequestRepository joinRequestRepository;
     
     @Autowired
     private UserService userService;
@@ -158,6 +162,125 @@ public class MainController {
         return "login";
     }
 
+    @PostMapping("/applyCrew/{adminId}/{postId}")
+    public String applyToCrew(@PathVariable Long adminId, @PathVariable Long postId, Model model, 
+                               HttpSession session, RedirectAttributes redirectAttributes) {
+
+        String userId = (String) session.getAttribute("userId");
+        User_info currentUser = userRepository.findByUserId(userId).orElse(null);
+
+        if (currentUser == null) {
+            redirectAttributes.addFlashAttribute("message", "로그인이 필요합니다.");
+            return "login";
+        }
+
+        if (currentUser.getCrew() != null) {
+            redirectAttributes.addFlashAttribute("message", "이미 크루에 속해있습니다.");
+            return "redirect:/post/" + postId;
+        }
+
+        User_info admin = userRepository.findById(adminId).orElse(null);
+        Crew adminCrew = admin.getCrew();
+
+        if (adminCrew == null) {
+            redirectAttributes.addFlashAttribute("message", "크루를 찾을 수 없습니다.");
+            return "redirect:/post/" + postId;
+        }
+
+        if (adminCrew.isFull()) {
+            redirectAttributes.addFlashAttribute("message", "크루의 정원이 초과되었습니다.");
+            return "redirect:/post/" + postId;
+        }
+
+        for (JoinRequest request : adminCrew.getJoinRequests()) {
+            if (request.getUser().equals(currentUser)) {
+                redirectAttributes.addFlashAttribute("message", "이미 가입 신청을 했습니다.");
+                return "redirect:/post/" + postId;
+            }
+        }
+
+        JoinRequest joinRequest = new JoinRequest(currentUser, adminCrew, LocalDateTime.now());
+        adminCrew.addJoinRequest(joinRequest);
+        joinRequestRepository.save(joinRequest);
+        crewRepository.save(adminCrew);
+
+        redirectAttributes.addFlashAttribute("message", "가입 신청이 완료되었습니다.");
+        return "redirect:/post/" + postId;
+    }
+
+    @GetMapping("/approvalJoinRequest")
+    public String getJoinRequests(Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+        String userId = (String) session.getAttribute("userId");
+        User_info currentUser = userRepository.findByUserId(userId).orElse(null);
+
+        if (currentUser == null || currentUser.getCrew() == null || !currentUser.getCrew().getAdmin().equals(currentUser)) {
+            redirectAttributes.addFlashAttribute("message", "접근 권한이 없습니다.");
+            return "redirect:/myCrew";
+        }
+
+        Crew crew = currentUser.getCrew();
+        List<JoinRequest> joinRequests = joinRequestRepository.findByCrew(crew);
+
+        model.addAttribute("joinRequests", joinRequests);
+        return "approvalJoinRequest"; // HTML 파일 이름
+    }
+
+    @PostMapping("/approveJoinRequest/{id}")
+    public String approveJoinRequest(@PathVariable Long id, Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+        String userId = (String) session.getAttribute("userId");
+        User_info currentUser = userRepository.findByUserId(userId).orElse(null);
+
+        if (currentUser == null || currentUser.getCrew() == null || !currentUser.getCrew().getAdmin().equals(currentUser)) {
+            redirectAttributes.addFlashAttribute("message", "접근 권한이 없습니다.");
+            return "redirect:/myCrew";
+        }
+
+        JoinRequest joinRequest = joinRequestRepository.findById(id).orElse(null);
+
+        if (joinRequest != null && joinRequest.getCrew().equals(currentUser.getCrew())) {
+            Crew crew = joinRequest.getCrew();
+            User_info user = joinRequest.getUser();
+
+            if (crew.isFull()) {
+                redirectAttributes.addFlashAttribute("message", "크루의 정원이 초과되었습니다.");
+                return "redirect:/approvalJoinRequest";
+            }
+
+            crew.addMember(user);
+            crew.removeJoinRequest(joinRequest);
+            user.setCrew(crew);
+            userRepository.save(user);
+            crewRepository.save(crew);
+            joinRequestRepository.delete(joinRequest);
+
+            
+        }
+
+        redirectAttributes.addFlashAttribute("message", "가입 신청이 승인되었습니다.");
+        return "redirect:/approvalJoinRequest";
+    }
+
+    @PostMapping("/rejectJoinRequest/{id}")
+    public String rejectJoinRequest(@PathVariable Long id, Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+        String userId = (String) session.getAttribute("userId");
+        User_info currentUser = userRepository.findByUserId(userId).orElse(null);
+
+        if (currentUser == null || currentUser.getCrew() == null || !currentUser.getCrew().getAdmin().equals(currentUser)) {
+            redirectAttributes.addFlashAttribute("message", "접근 권한이 없습니다.");
+            return "redirect:/myCrew";
+        }
+
+        JoinRequest joinRequest = joinRequestRepository.findById(id).orElse(null);
+
+        if (joinRequest != null && joinRequest.getCrew().equals(currentUser.getCrew())) {
+            Crew crew = joinRequest.getCrew();
+            crew.removeJoinRequest(joinRequest);
+            joinRequestRepository.delete(joinRequest);
+        }
+        
+        redirectAttributes.addFlashAttribute("message", "가입 신청이 거절되었습니다.");
+        return "redirect:/approvalJoinRequest";
+    }
 
     @GetMapping("/board")
     public String board(@RequestParam(value = "search", required = false) String search,
@@ -282,11 +405,27 @@ public class MainController {
         model.addAttribute("commentDto", new CommentDTO());
         return "postDetail";
     }
-
+    
+    @Transactional
     @GetMapping("/delete/{id}")
-    public String deletePost(@PathVariable Long id) {
-        postRepository.deleteById(id);
-        return "redirect:/board";
+    public String deletePost(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        String userId = (String) session.getAttribute("userId");
+        User_info user = userRepository.findByUserId(userId).orElse(null);
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("message", "로그인이 필요합니다.");
+            return "redirect:/login";
+        }
+        Post post = postRepository.findById(id).orElse(null);
+        User_info requestUser = userRepository.findById(post.getUserId()).orElse(null);
+        if (requestUser.getUserId().equals(user.getUserId())) {
+            commentRepository.deleteByPostId(id);
+            postRepository.deleteById(id);
+            redirectAttributes.addFlashAttribute("message", "게시글이 삭제되었습니다.");
+            return "redirect:/board";
+        } else {
+            redirectAttributes.addFlashAttribute("message", "다른 유저가 쓴 게시글은 삭제할 수 없습니다.");
+            return "redirect:/post/" + id;
+        }
     }
 
     @GetMapping("/deleteComment/{id}")

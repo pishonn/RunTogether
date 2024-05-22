@@ -31,22 +31,27 @@
         }
 
         #button {
-            display: inline-flex;
-            width: 100px;
+            width: 80px;
             background-color: #007bff;
             color: white;
             border-radius: 20px;
+            text-align: center;
+            text-decoration: none;
+            margin-bottom: 20px;
+            border-radius: 30px;
+            float: right;
+            margin-left: 10px;
         }
         
         .write-btn, .profile-btn, .logout-btn {
-            background-color: green;
+            background-color: #007bff;
             color: white;
             padding: 10px 20px;
             text-align: center;
             text-decoration: none;
             margin-top: 10px;
             margin-bottom: 20px;
-            border-radius: 5px;
+            border-radius: 30px;
             float: right;
             margin-left: 10px;
         }
@@ -149,7 +154,7 @@
             <a> / </a>
             <a href="/board?type=crew" class="tab" th:classappend="${type == 'crew'} ? 'active black-tab' : 'gray-tab'">크루 모집</a>
         </div>            
-        <a th:href="@{/write(type=${type})}" class="write-btn">글쓰기</a>
+        <a th:href="@{/write(type=${type})}" id="button">글쓰기</a>
         <table>
             <tr>
                 <th>제목</th>
