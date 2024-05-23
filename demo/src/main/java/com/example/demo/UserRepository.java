@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 
 
 public interface UserRepository extends JpaRepository<User_info, Long> {
+    Optional<User_info> findByName(String name);
     Optional<User_info> findByUserId(String userId);
     Optional<User_info> findByUserIdAndPw(String userId, String pw);
     List<User_info> findTop10ByOrderByTotalPointsDesc();

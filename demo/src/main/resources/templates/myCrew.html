@@ -295,7 +295,7 @@
         #chatRoomBody::-webkit-scrollbar-thumb {
             background: rgba(136, 136, 136, 0.5); /* 핸들의 배경색을 투명하게 */
         }
-        
+
         #chatRoomBody::-webkit-scrollbar-thumb:hover {
             background: rgba(85, 85, 85, 0.5); /* 핸들에 마우스를 올렸을 때의 배경색을 투명하게 */
         }
@@ -314,36 +314,36 @@
             background-color: white;
             overflow: hidden;
         }
-        
+
         #chatRoom.open {
             left: 0; /* 열린 상태에서는 left를 0으로 설정 */
         }
-        
+
         #chatRoomHeader {
             padding: 5px;
             background: #007bff;
             color: white;
         }
-        
+
         #chatRoomBody {
             flex: 1;
             overflow-y: auto;
             padding: 10px;
             scroll-behavior: smooth; /* 스크롤 부드럽게 */
         }
-        
+
         #chatRoomFooter {
             padding: 10px;
             background: #ddd;
         }
-        
+
         #chatRoomFooter input {
             width: 90%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 50px;
         }
-        
+
         #chatRoomFooter button {
             padding: 5px;
             background: transparent;
@@ -352,70 +352,180 @@
             border-radius: 4px;
             margin-left: 10px;
         }
-        
+
         #chatRoomFooter button img {
             width: 20px; /* 원하는 크기로 설정 */
             height: 20px; /* 원하는 크기로 설정 */
         }
         
+
         .chat-message {
             display: flex;
             align-items: flex-end;
             margin-bottom: 10px;
-        }
-        
-        .chat-message .message-content {
-            max-width: 70%;
-            padding: 10px;
-            border-radius: 20px;
-            background-color: #f1f1f1;
+            width: 100%;
             position: relative;
-            word-wrap: break-word;
         }
-        
-        .chat-message .profile {
+
+        .profile-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0 10px;
+            margin-right: 5px; /* 말풍선과의 간격 조정 */
         }
         
-        .chat-message .profile img {
-            width: 30px;
-            height: 30px;
+        .profile-container .profile {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
+            overflow: hidden;
         }
         
-        .chat-message .profile span {
-            font-size: 12px;
-            margin-top: 5px;
+        .profile-container .profile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
+        
+        .profile-container .profile-name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .chat-message.right {
+            justify-content: flex-end;
+            text-align: left; /* 오른쪽 정렬 */
+        }
+
+        .chat-message.left {
+            justify-content: flex-start;
+            text-align: left; /* 왼쪽 정렬 */
+        }
+
+        .message-content {
+            max-width: 100%;
+            padding: 10px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            position: relative;
+            display: flex;
+        }
+
         
         .chat-message.right .message-content {
             background-color: #007bff;
             color: white;
-            margin-left: auto;
-            order: 2; /* 오른쪽 정렬을 위해 추가 */
+            margin-right: 5px; /* 시간과의 간격 조정 */
         }
-        
-        .chat-message.right .profile {
-            order: 1; /* 오른쪽 정렬을 위해 추가 */
-        }
-        
+
         .chat-message.left .message-content {
-            margin-right: auto;
-            order: 2; /* 왼쪽 정렬을 위해 추가 */
+            background-color: #f1f1f1;
+            color: black;
+            margin-left: 5px; /* 시간과의 간격 조정 */
         }
-        
-        .chat-message.left .profile {
-            order: 1; /* 왼쪽 정렬을 위해 추가 */
+
+        .message-time {
+            font-size: 10px;
+            color: #999;
+            display: inline-block;
+            align-self: flex-end; /* 요소를 하단에 정렬 */
+            margin-bottom: 3px;
         }
-        
-        
+
+        .chat-message.right .message-time {
+            margin-right: 5px;
+        }
+
+        .chat-message.left .message-time {
+            margin-left: 5px;
+        }
+
+        .message-container {
+            display: flex;
+            align-items: center;
+            max-width: 100%;
+        }
+
+        .chat-message.left .message-container {
+            flex-direction: row;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .chat-message.right .message-container {
+            flex-direction: row-reverse;
+            
+        }
+
+
+        .date-divider {
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+            font-size: 14px;
+            color: #999;
+        }
+
+        .joinRequestBadge {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 1px 5px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 90px;
+            box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            border-radius: 20px;
+        }
+
+        .dropdown-content button {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .dropdown-content button:hover {
+            color: white;
+            background-color: red;
+        }
+
+        .show {
+            display: block;
+        }
+
+
+
+
     </style>
 </head>
 
 <body>
+    <input type="hidden" id="crewId" th:value="${crew.id}">
+    <input type="hidden" id="userId" th:value="${userData.id}">
     <div class="container">
 
         <div th:if="${crew != null}">
@@ -456,9 +566,10 @@
                 <button th:if="${crew == null}" style="margin-top: -18px;" onclick="noCrewAlert()">
                     <img src="./img/chat.png">
                 </button>
-                <button style="margin-top: -18px;" onclick="window.location.href='/approvalJoinRequest'" th:if="${crew != null && crew.admin == userData}">
+                <button style="margin-top: -18px; position: relative;" onclick="window.location.href='/approvalJoinRequest'" th:if="${crew != null && crew.admin == userData}">
                     <img src="./img/join-request.png">
-                </button>
+                    <span id="joinRequestBadge" class="joinRequestBadge">0</span>
+                </button>                
                 <button style="margin-top: -18px;" onclick="window.location.href='/editCrewProfile'" id="settings-btn" th:if="${crew != null && crew.admin == userData}">
                     <img src="./img/setting.png">
                 </button>
@@ -499,9 +610,15 @@
                     <td th:text="${crew.admin.totalPoints + ' point'}"></td>
                     <td th:text="${#numbers.formatDecimal(crew.admin.totalDistance, 1, 2) + ' km'}"></td>
                 </tr>
+            </table>
+            <table class="ranking-table">
+                <hr class="divider"> <!-- 구분선 -->
+                <b>멤버</b>
+                <tr th:if="${crew.members.isEmpty()}">
+                    <td colspan="4" style="color: gray;">아직 멤버가 없습니다.</td>
+                </tr>
+                
                 <tr th:each="member : ${crew.members}" th:unless="${member.id == crew.admin.id}">
-                    <hr class="divider"> <!-- 구분선 -->
-                    <b>멤버</b>
                     <td>
                         <a th:href="@{/profile/{id}(id=${member.id})}">
                             <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${member.profileImage})}" class="member-profile-img"/>
@@ -510,6 +627,14 @@
                     <td th:text="${member.name}"></td>
                     <td th:text="${member.totalPoints + ' point'}"></td>
                     <td th:text="${#numbers.formatDecimal(member.totalDistance, 1, 2) + ' km'}"></td>
+                    <td th:if="${crew != null && crew.admin == userData}">
+                        <div class="dropdown">
+                            <button style="background: transparent;border: none;" onclick="toggleDropdown(event)">&#x22EE;</button> <!-- 점 세개 아이콘 -->
+                            <div class="dropdown-content">
+                                <button onclick="expelMember(${member.id})">추방하기</button>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
             </table>
             
@@ -655,10 +780,104 @@
             const chatRoom = document.getElementById('chatRoom');
             chatRoom.classList.toggle('open'); // open 클래스를 토글
         }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const crewId = document.getElementById('crewId').value; // crewId 값을 가져옴
+        
+            fetch(`/joinRequestsCount?crewId=${crewId}`) 
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Join requests count:', data);
+                    const badge = document.getElementById('joinRequestBadge');
+                    if (data > 0) { 
+                        badge.textContent = data;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                                    })
+                .catch(error => {
+                    console.error('Error fetching join requests count:', error);
+                });
+        });
+        
+
+        
+        
     
     </script>
     <script th:if="${message}">
         alert('[[${message}]]');
+    </script>
+
+    <script>
+        function expelMember(memberId) {
+            if (confirm('정말로 이 멤버를 추방하시겠습니까?')) {
+                fetch(`/expelMember?memberId=${memberId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('멤버가 추방되었습니다.');
+                        location.reload(); // 페이지 새로고침하여 변경 사항 반영
+                    } else {
+                        alert('멤버 추방에 실패하였습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error expelling member:', error);
+                    alert('멤버 추방 중 오류가 발생하였습니다.');
+                });
+            }
+        }
+
+        function toggleDropdown(event) {
+            const dropdownContent = event.target.nextElementSibling;
+            dropdownContent.classList.toggle('show');
+        }
+
+        // 페이지 다른 곳을 클릭하면 드롭다운 메뉴를 닫습니다.
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdown button')) {
+                const dropdowns = document.getElementsByClassName('dropdown-content');
+                for (let i = 0; i < dropdowns.length; i++) {
+                    const openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const crewId = document.getElementById('crewId').value; // crewId 값을 가져옴
+        
+            fetch(`/joinRequestsCount?crewId=${crewId}`) 
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Join requests count:', data);
+                    const badge = document.getElementById('joinRequestBadge');
+                    if (data > 0) { 
+                        badge.textContent = data;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching join requests count:', error);
+                });
+        });
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
@@ -696,6 +915,7 @@
             const messageContent = messageInput.value.trim();
             const profileImage = document.getElementById('userProfileImage').getAttribute('src');
             const crewId = document.getElementById('crewId').value;
+            const senderId = document.getElementById('userId').value;
 
             console.log('Sending message:', messageContent, 'from user:', currentUserName, 'with profile image:', profileImage, 'to crew:', crewId);
 
@@ -704,7 +924,9 @@
                     content: messageContent,
                     sender: currentUserName,
                     profileImage: profileImage,
-                    crewId: crewId // DTO에 맞게 변경
+                    crewId: crewId, // DTO에 맞게 변경
+                    senderId: senderId, // senderId 추가
+                    timestamp: new Date().toISOString() // 타임스탬프 추가
                 };
                 stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
                 messageInput.value = '';
@@ -719,43 +941,81 @@
 
         function displayMessage(message) {
             console.log('Displaying message:', message); // 디버깅용
-
+        
+            const chatRoomBody = document.getElementById('chatRoomBody');
+            const lastMessageElement = chatRoomBody.lastElementChild;
+            let lastMessageDate = null;
+        
+            if (lastMessageElement && lastMessageElement.classList.contains('chat-message')) {
+                lastMessageDate = new Date(lastMessageElement.dataset.timestamp);
+            }
+        
+            const messageDate = new Date(message.timestamp);
+        
+            // 날짜가 변경되었는지 확인하고 날짜 문구 추가
+            if (!lastMessageDate || lastMessageDate.toDateString() !== messageDate.toDateString()) {
+                const dateDivider = document.createElement('div');
+                dateDivider.classList.add('date-divider');
+                dateDivider.textContent = `${messageDate.getFullYear()}년 ${messageDate.getMonth() + 1}월 ${messageDate.getDate()}일`;
+                chatRoomBody.appendChild(dateDivider);
+            }
+        
             const messageElement = document.createElement('div');
             messageElement.classList.add('chat-message');
-
+            messageElement.dataset.timestamp = message.timestamp;
+        
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
+        
             const messageContent = document.createElement('div');
             messageContent.classList.add('message-content');
             messageContent.textContent = message.content;
-
+        
+            const timeElement = document.createElement('div');
+            timeElement.classList.add('message-time');
+            timeElement.textContent = `${String(messageDate.getHours()).padStart(2, '0')}:${String(messageDate.getMinutes()).padStart(2, '0')}`;
+        
             if (message.sender === currentUserName) {
                 messageElement.classList.add('right');
-                messageElement.appendChild(messageContent);
+                messageContainer.appendChild(messageContent);
+                messageContainer.appendChild(timeElement);
+                messageElement.appendChild(messageContainer);
             } else {
                 messageElement.classList.add('left');
-
+                messageContainer.appendChild(messageContent);
+                messageContainer.appendChild(timeElement);
+                
+                const profileLink = document.createElement('a');
+                profileLink.href = `/profile/${message.senderId}`; // senderId 사용
+                
                 const profileElement = document.createElement('div');
                 profileElement.classList.add('profile');
-
+        
                 const profileImg = document.createElement('img');
                 profileImg.src = message.profileImage;
-                profileElement.appendChild(profileImg);
-
+                profileLink.appendChild(profileImg);    
+                profileElement.appendChild(profileLink);
+        
                 const profileName = document.createElement('span');
+                profileName.classList.add('profile-name');
                 profileName.textContent = message.sender;
-                profileElement.appendChild(profileName);
+        
+                const profileContainer = document.createElement('div');
+                profileContainer.classList.add('profile-container');
+                profileContainer.appendChild(profileElement);
+                profileContainer.appendChild(profileName);
+                
+                messageElement.appendChild(messageContainer);
+                messageElement.insertBefore(profileContainer, messageElement.firstChild); // profileContainer를 messageElement의 첫 번째 자식으로 추가
 
-                messageElement.appendChild(profileElement);
-                messageElement.appendChild(messageContent);
             }
-
-            const chatRoomBody = document.getElementById('chatRoomBody');
-            if (chatRoomBody) {
-                chatRoomBody.appendChild(messageElement);
-                chatRoomBody.scrollTop = chatRoomBody.scrollHeight;
-            } else {
-                console.error('chatRoomBody element not found');
-            }
+        
+            chatRoomBody.appendChild(messageElement);
+            chatRoomBody.scrollTop = chatRoomBody.scrollHeight;
         }
+        
+        
+        
 
         function loadChatHistory() {
             const crewId = document.getElementById('crewId').value;
@@ -782,7 +1042,7 @@
             const crewIdElement = document.getElementById('crewId');
             if (crewIdElement && crewIdElement.value) {
                 connect();
-        
+
                 const chatMessageInput = document.getElementById('chatMessage');
                 if (chatMessageInput) {
                     chatMessageInput.addEventListener('keydown', function(event) {
@@ -798,8 +1058,6 @@
                 console.log('No crew ID found, skipping WebSocket connection');
             }
         };
-        
-
 
 
     </script>

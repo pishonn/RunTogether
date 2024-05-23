@@ -17,6 +17,9 @@ class ChatHistoryController {
     @Autowired
     private CrewRepository crewRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping("/chat/history/{crewId}")
     public List<ChatMessageDTO> getChatHistory(@PathVariable Long crewId) {
         Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("Invalid crew ID"));
@@ -31,6 +34,11 @@ class ChatHistoryController {
         chatMessageDTO.setSender(chatMessage.getSender());
         chatMessageDTO.setProfileImage(chatMessage.getProfileImage());
         chatMessageDTO.setCrewId(chatMessage.getCrew().getId());
+        chatMessageDTO.setTimestamp(chatMessage.getTimestamp());
+
+        User_info sender = userRepository.findByName(chatMessage.getSender()).orElseThrow(() -> new IllegalArgumentException("Invalid sender name"));
+        chatMessageDTO.setSenderId(sender.getId());
+
         return chatMessageDTO;
     }
 }

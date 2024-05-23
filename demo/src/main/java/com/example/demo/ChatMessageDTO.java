@@ -1,11 +1,15 @@
 package com.example.demo;
 
+import java.time.LocalDateTime;
+
 public class ChatMessageDTO {
     private Long id;
     private String content;
     private String sender;
     private String profileImage;
     private Long crewId;
+    private Long senderId; // 추가된 필드
+    private LocalDateTime timestamp; // 타임스탬프 필드 추가
 
     // Getters and setters
     public Long getId() {
@@ -46,5 +50,21 @@ public class ChatMessageDTO {
 
     public void setCrewId(Long crewId) {
         this.crewId = crewId;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Long getSenderId() {
+        return senderId;
+    }
+
+    public void setSenderId(Long senderId) {
+        this.senderId = senderId;
     }
 }

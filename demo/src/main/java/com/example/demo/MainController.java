@@ -4,7 +4,10 @@ package com.example.demo;
 import java.util.Optional;
 import java.util.Random;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -281,6 +284,18 @@ public class MainController {
         redirectAttributes.addFlashAttribute("message", "가입 신청이 거절되었습니다.");
         return "redirect:/approvalJoinRequest";
     }
+
+
+    @GetMapping("/joinRequestsCount")
+    public ResponseEntity<Long> getJoinRequestsCount(@RequestParam Long crewId, HttpSession session, HttpServletResponse response) {
+        long count = joinRequestRepository.countByCrewId(crewId);
+        System.out.println("Crew ID: " + crewId); // 디버깅용 출력
+        System.out.println("Join Request Count: " + count); // 디버깅용 출력
+        
+        
+        return ResponseEntity.ok(count);
+    }
+
 
     @GetMapping("/board")
     public String board(@RequestParam(value = "search", required = false) String search,
