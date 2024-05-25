@@ -403,12 +403,13 @@
         }
 
         .message-content {
-            max-width: 100%;
+            max-width: 200px;
             padding: 10px;
             border-radius: 20px;
-            word-wrap: break-word;
+            white-space: pre-wrap; /* 텍스트가 정상적으로 줄바꿈 되도록 설정 */
+            word-wrap: normal; /* 줄바꿈 설정을 기본으로 변경 */
             position: relative;
-            display: flex;
+            display: block;
         }
 
         
@@ -454,7 +455,8 @@
 
         .chat-message.right .message-container {
             flex-direction: row-reverse;
-            
+            margin-top: -10px;
+            margin-bottom: 15px;
         }
 
 
@@ -518,6 +520,14 @@
         }
 
 
+        .chat-message.left .message-content.chatgpt-message {
+            background-color: white;
+            color: black;
+            border : 1px solid #007bff;
+        }
+        
+        
+        
 
 
     </style>
@@ -916,9 +926,9 @@
             const profileImage = document.getElementById('userProfileImage').getAttribute('src');
             const crewId = document.getElementById('crewId').value;
             const senderId = document.getElementById('userId').value;
-
+        
             console.log('Sending message:', messageContent, 'from user:', currentUserName, 'with profile image:', profileImage, 'to crew:', crewId);
-
+        
             if (messageContent && stompClient) {
                 const chatMessage = {
                     content: messageContent,
@@ -928,10 +938,32 @@
                     senderId: senderId, // senderId 추가
                     timestamp: new Date().toISOString() // 타임스탬프 추가
                 };
+        
                 stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
                 messageInput.value = '';
+        
+                // 특정 키워드가 포함된 메시지인 경우 GPT 요청을 트리거
+                if (messageContent.match(/gpt|지피티/i) && messageContent.match(/목적지|장소|곳/i) && messageContent.match(/추천|제안|어디/i)) {
+                    fetch('/chat/trigger-gpt', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `crewId=${crewId}`
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log('GPT request triggered successfully.');
+                        } else {
+                            console.error('Failed to trigger GPT request.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
             }
         }
+        
+        
 
         function onMessageReceived(payload) {
             const message = JSON.parse(payload.body);
@@ -969,8 +1001,12 @@
         
             const messageContent = document.createElement('div');
             messageContent.classList.add('message-content');
-            messageContent.textContent = message.content;
         
+            // ** **로 둘러싸인 텍스트를 <b> 태그로 변환
+            const formattedContent = message.content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            messageContent.innerHTML = formattedContent;
+            
+            console.log("messageContent: ", messageContent)
             const timeElement = document.createElement('div');
             timeElement.classList.add('message-time');
             timeElement.textContent = `${String(messageDate.getHours()).padStart(2, '0')}:${String(messageDate.getMinutes()).padStart(2, '0')}`;
@@ -982,18 +1018,25 @@
                 messageElement.appendChild(messageContainer);
             } else {
                 messageElement.classList.add('left');
+                if (message.sender === 'ChatGPT') {
+                    messageContent.classList.add('chatgpt-message'); // ChatGPT 메시지용 클래스 추가
+                }
                 messageContainer.appendChild(messageContent);
                 messageContainer.appendChild(timeElement);
                 
-                const profileLink = document.createElement('a');
+                if (message.sender === 'ChatGPT') {
+                    var profileLink = document.createElement('b');
+                } else {
+                    var profileLink = document.createElement('a');
+                }
                 profileLink.href = `/profile/${message.senderId}`; // senderId 사용
-                
+        
                 const profileElement = document.createElement('div');
                 profileElement.classList.add('profile');
         
                 const profileImg = document.createElement('img');
                 profileImg.src = message.profileImage;
-                profileLink.appendChild(profileImg);    
+                profileLink.appendChild(profileImg);
                 profileElement.appendChild(profileLink);
         
                 const profileName = document.createElement('span');
@@ -1004,17 +1047,14 @@
                 profileContainer.classList.add('profile-container');
                 profileContainer.appendChild(profileElement);
                 profileContainer.appendChild(profileName);
-                
+        
                 messageElement.appendChild(messageContainer);
                 messageElement.insertBefore(profileContainer, messageElement.firstChild); // profileContainer를 messageElement의 첫 번째 자식으로 추가
-
             }
         
             chatRoomBody.appendChild(messageElement);
             chatRoomBody.scrollTop = chatRoomBody.scrollHeight;
         }
-        
-        
         
 
         function loadChatHistory() {

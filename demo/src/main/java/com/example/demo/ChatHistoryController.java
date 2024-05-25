@@ -36,8 +36,17 @@ class ChatHistoryController {
         chatMessageDTO.setCrewId(chatMessage.getCrew().getId());
         chatMessageDTO.setTimestamp(chatMessage.getTimestamp());
 
-        User_info sender = userRepository.findByName(chatMessage.getSender()).orElseThrow(() -> new IllegalArgumentException("Invalid sender name"));
-        chatMessageDTO.setSenderId(sender.getId());
+        try {
+            User_info sender = userRepository.findByName(chatMessage.getSender()).orElseThrow(() -> new IllegalArgumentException("Invalid sender name"));
+            chatMessageDTO.setSenderId(sender.getId());
+        } catch (IllegalArgumentException e) {
+            // ChatGPT와 같은 시스템 메시지의 경우 예외 처리
+            if ("ChatGPT".equals(chatMessage.getSender())) {
+                chatMessageDTO.setSenderId(0L); // 시스템 사용자 ID 설정
+            } else {
+                throw e; // 다른 경우에는 예외를 다시 던집니다.
+            }
+        }
 
         return chatMessageDTO;
     }
