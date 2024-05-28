@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,6 +66,8 @@ public class User_info {
 
     @Column
     private double totalDistance = 0.0;
+
+    private LocalDateTime lastEnteredChatTime;
 
     public Long getId() {
         return id;
@@ -176,6 +179,14 @@ public class User_info {
 
     public void setTotalDistance(double totalDistance) {
         this.totalDistance = totalDistance;
+    }
+
+    public LocalDateTime getLastEnteredChatTime() {
+        return lastEnteredChatTime;
+    }
+
+    public void setLastEnteredChatTime(LocalDateTime lastEnteredChatTime) {
+        this.lastEnteredChatTime = lastEnteredChatTime;
     }
 
     public User_info() {

@@ -4,7 +4,9 @@ package com.example.demo;
 import java.util.Optional;
 import java.util.Random;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -344,7 +346,7 @@ public class MainController {
 
     @GetMapping("/write")
     public String createPost(@RequestParam(value = "type", required = false, defaultValue = "free") String type, 
-    HttpSession session, HttpServletResponse response, Model model) {
+    HttpSession session, HttpServletResponse response, Model model, RedirectAttributes redirectAttributes) {
 
         response.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -353,6 +355,32 @@ public class MainController {
 
 
         if (session != null && session.getAttribute("userId") != null) {
+
+            System.out.println("type: " + type);
+            if (type.equals("crew")) {
+                String userId = (String) session.getAttribute("userId");
+                User_info userData = userRepository.findByUserId(userId).orElse(null);
+
+                System.out.println("userData: " + userData);
+                
+                if (userData.getCrew() == null) {
+                    redirectAttributes.addFlashAttribute("message", "크루 관리자만 작성할 수 있습니다.");
+                    return "redirect:/board?type=" + type;
+                } else {
+
+                    if (userData.getCrew().getAdmin().equals(userData)) {
+                        model.addAttribute("type", type);
+                        return "write";
+
+                    } else {
+                        redirectAttributes.addFlashAttribute("message", "크루 관리자만 작성할 수 있습니다.");
+                        return "redirect:/board?type=" + type;
+                    }
+                    
+                }
+            }
+            
+
             model.addAttribute("type", type);
             return "write";
         } else {
@@ -1042,6 +1070,91 @@ public class MainController {
         model.addAttribute("crew", crewData);
         return "editCrewProfile";
     }
+
+    @PostMapping("/updateCrewProfile")
+    public String updateCrewProfile(@ModelAttribute CrewDTO dto, HttpSession session, Model model, RedirectAttributes redirectAttributes, HttpServletResponse response) {
+        String userId = (String) session.getAttribute("userId");
+        User_info userData = userRepository.findByUserId(userId).orElse(null);
+        if (userData == null) {
+            model.addAttribute("message", "로그인이 필요합니다.");
+            return "login";
+        }
+
+        Crew crewData = userData.getCrew();
+        if (crewData == null) {
+            model.addAttribute("message", "크루에 가입되어 있지 않습니다.");
+            return "myCrew";
+        }
+
+        if (!crewData.getAdmin().getId().equals(userData.getId())) {
+            model.addAttribute("message", "크루 관리자만 수정 가능합니다.");
+            return "myCrew";
+        }
+
+        if (!crewData.getName().equals(dto.getName()) && crewRepository.existsByName(dto.getName())) {
+            model.addAttribute("message", "이미 존재하는 크루 이름입니다.");
+            model.addAttribute("crew", dto);
+            return "editCrewProfile";
+        }
+
+        if (crewData.getMemberCount() > dto.getCapacity()) {
+            model.addAttribute("message", "수용 인원을 현재 인원보다 작게 설정할 수 없습니다.");
+            model.addAttribute("crew", dto);
+            return "editCrewProfile";
+        }
+
+        crewData.setName(dto.getName());
+        crewData.setCapacity(dto.getCapacity());
+        crewData.setRegion(dto.getRegion());
+        crewData.setProfileImage(dto.getProfileImage());
+        crewRepository.save(crewData);
+
+        redirectAttributes.addFlashAttribute("message", "크루 정보가 수정되었습니다.");
+        return "redirect:/myCrew";
+    }
+
+    @GetMapping("/expelMember/{memberId}")
+    public ResponseEntity<Map<String, Object>> expelMember(@PathVariable Long memberId, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        String userId = (String) session.getAttribute("userId");
+        User_info userData = userRepository.findByUserId(userId).orElse(null);
+
+        if (userData == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        Crew crewData = userData.getCrew();
+        if (crewData == null) {
+            response.put("success", false);
+            response.put("message", "크루에 가입되어 있지 않습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        if (!crewData.getAdmin().getId().equals(userData.getId())) {
+            response.put("success", false);
+            response.put("message", "크루 관리자만 멤버를 추방할 수 있습니다.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+
+        User_info memberToExpel = userRepository.findById(memberId).orElse(null);
+        if (memberToExpel == null || !crewData.getMembers().contains(memberToExpel)) {
+            response.put("success", false);
+            response.put("message", "추방할 멤버를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        crewData.getMembers().remove(memberToExpel);
+        memberToExpel.setCrew(null); // User_info 엔티티의 crew 필드를 null로 설정
+        userRepository.save(memberToExpel); // 변경 사항 저장
+        crewRepository.save(crewData);
+
+        response.put("success", true);
+        response.put("message", "멤버가 추방되었습니다.");
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping("/md")
     public String makeDummyData(RedirectAttributes redirectAttributes) {

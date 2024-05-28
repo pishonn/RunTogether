@@ -151,12 +151,11 @@
                     </div>
                 </div>
             </div>
-            <form name="editCrewForm" th:action="@{/editCrewProfile}" th:object="${crew}" method="post" onsubmit="return setRegionData()">
-                <input type="hidden" id="profileImage" name="profileImage" th:value="1">
+            <form name="editCrewForm" th:action="@{/updateCrewProfile}" th:object="${crew}" method="post" onsubmit="return setRegionData()">
+                
                 <input type="text" id="name" name="name" th:value="*{name}" placeholder="크루 이름" class="form-field" required/>
-                
                 <input type="hidden" id="region" name="region" th:value="*{region}">
-                
+                <input type="hidden" id="profileImage" name="profileImage" th:value="*{profileImage}">
 
                 <div class="form-field">
                     <a class="description">지역을 선택해주세요.</a>
@@ -172,7 +171,7 @@
                         <option value="">읍·면·동</option>
                     </select>
                 </div>
-                <input type="number" id="capacity" name="capacity" placeholder="정원 (2~20명)"
+                <input type="number" id="capacity" name="capacity" th:value="*{capacity}" placeholder="정원 (2~20명)"
        min="2" max="20" class="form-field" required/>
 
                 <input type="submit" id="button" value="수정하기">
@@ -196,6 +195,7 @@
         function selectPhoto(photoNumber) {
             document.getElementById("profilePicture").src = `./img/default-crew-profile${photoNumber}.jpg`;
             document.getElementById("profileImage").value = photoNumber;
+            console.log(document.getElementById("profileImage").value);
             closeModal();        
         }
 
@@ -211,66 +211,92 @@
         
             return true;
         }
+        
+
 
     </script>
     <script type="application/javascript">
-		jQuery(document).ready(function(){
-            //sido option 추가
+        async function selectRegion(sido, sigugun, dong) {
+            if (sido) {
+                console.log("Setting Sido:", sido);
+                await setSelectOption('#sido', sido);
+    
+                console.log("Setting Sigugun:", sigugun);
+                await setSelectOption('#sigugun', sigugun);
+    
+                console.log("Setting Dong:", dong);
+                await setSelectOption('#dong', dong);
+            }
+        }
+    
+        function setSelectOption(selector, text) {
+            return new Promise((resolve) => {
+                jQuery(selector).one('change', resolve);
+                jQuery(selector + ' option').filter(function() {
+                    return jQuery(this).text() === text;
+                }).prop('selected', true).trigger('change');
+            });
+        }
+    
+    
+        jQuery(document).ready(function(){
+            // sido option 추가
             jQuery.each(hangjungdong.sido, function(idx, code){
-              //append를 이용하여 option 하위에 붙여넣음
-              jQuery('#sido').append(fn_option(code.sido, code.codeNm));
+                jQuery('#sido').append(fn_option(code.sido, code.codeNm));
             });
-           
-            //sido 변경시 시군구 option 추가
+    
+            // sido 변경시 시군구 option 추가
             jQuery('#sido').change(function(){
-              jQuery('#sigugun').show();
-              jQuery('#sigugun').empty();
-              jQuery('#sigugun').append(fn_option('','선택')); //
-              jQuery.each(hangjungdong.sigugun, function(idx, code){
-                if(jQuery('#sido > option:selected').val() == code.sido)
-                  jQuery('#sigugun').append(fn_option(code.sigugun, code.codeNm));
-              });
-           
-              //세종특별자치시 예외처리
-              //옵션값을 읽어 비교
-              if(jQuery('#sido option:selected').val() == '36'){
-                jQuery('#sigugun').hide();
-                //index를 이용해서 selected 속성(attr)추가
-                //기본 선택 옵션이 최상위로 index 0을 가짐
-                jQuery('#sigugun option:eq(1)').attr('selected', 'selected');
-                //trigger를 이용해 change 실행
-                jQuery('#sigugun').trigger('change');
-              }
+                jQuery('#sigugun').show();
+                jQuery('#sigugun').empty();
+                jQuery('#sigugun').append(fn_option('', '선택'));
+                jQuery.each(hangjungdong.sigugun, function(idx, code){
+                    if (jQuery('#sido > option:selected').val() == code.sido)
+                        jQuery('#sigugun').append(fn_option(code.sigugun, code.codeNm));
+                });
+    
+                // 세종특별자치시 예외처리
+                if (jQuery('#sido option:selected').val() == '36') {
+                    jQuery('#sigugun').hide();
+                    jQuery('#sigugun option:eq(1)').attr('selected', 'selected');
+                    jQuery('#sigugun').trigger('change');
+                }
             });
-           
-            //시군구 변경시 행정동 옵션추가
+    
+            // 시군구 변경시 행정동 옵션 추가
             jQuery('#sigugun').change(function(){
-              //option 제거
-              jQuery('#dong').empty();
-              jQuery.each(hangjungdong.dong, function(idx, code){
-                if(jQuery('#sido > option:selected').val() == code.sido && jQuery('#sigugun > option:selected').val() == code.sigugun)
-                  jQuery('#dong').append(fn_option(code.dong, code.codeNm));
-              });
-              //option의 맨앞에 추가
-              jQuery('#dong').prepend(fn_option('','선택'));
-              //option중 선택을 기본으로 선택
-              jQuery('#dong option:eq("")').attr('selected', 'selected');
-           
+                jQuery('#dong').empty();
+                jQuery.each(hangjungdong.dong, function(idx, code){
+                    if (jQuery('#sido > option:selected').val() == code.sido && jQuery('#sigugun > option:selected').val() == code.sigugun)
+                        jQuery('#dong').append(fn_option(code.dong, code.codeNm));
+                });
+                jQuery('#dong').prepend(fn_option('', '선택'));
+                jQuery('#dong option:eq("")').attr('selected', 'selected');
             });
-           
+    
             jQuery('#dong').change(function(){
                 var sido = jQuery('#sido option:selected').val();
                 var sigugun = jQuery('#sigugun option:selected').val();
                 var dong = jQuery('#dong option:selected').val();
-                var dongCode = sido + sigugun + dong + '00';    
+                var dongCode = sido + sigugun + dong + '00';
             });
-          });
-           
-          function fn_option(code, name){
-            return '<option value="' + code +'">' + name +'</option>';
-          }
-          
-	</script>
+    
+            // 유저의 기존 설정 불러오기
+            var userRegion = '[[${crew.region}]]';
+            var regionParts = userRegion.split(' ');
+            var userSido = regionParts[0];
+            var userSigugun = regionParts[1];
+            var userDong = regionParts[2];
+    
+            console.log(userSido, userSigugun, userDong);
+            selectRegion(userSido, userSigugun, userDong);
+        });
+    
+        function fn_option(code, name){
+            return '<option value="' + code + '">' + name + '</option>';
+        }
+    </script>
+    
     <script th:if="${message}">
         alert('[[${message}]]');
     </script>

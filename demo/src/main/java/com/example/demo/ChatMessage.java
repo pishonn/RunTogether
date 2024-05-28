@@ -4,9 +4,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class ChatMessage {
@@ -24,11 +29,20 @@ public class ChatMessage {
 
     private LocalDateTime timestamp;
 
+    @ManyToMany
+    @JoinTable(
+        name = "message_read",
+        joinColumns = @JoinColumn(name = "message_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User_info> readBy = new HashSet<>();
+    
     @PrePersist
     protected void onCreate() {
         timestamp = LocalDateTime.now();
     }
 
+    
     // Getters and setters
     public Long getId() {
         return id;
@@ -85,4 +99,21 @@ public class ChatMessage {
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
+
+    public Set<User_info> getReadBy() {
+        return readBy;
+    }
+
+    public void setReadBy(Set<User_info> readBy) {
+        this.readBy = readBy;
+    }
+
+    public void addReadBy(User_info user) {
+        readBy.add(user);
+    }
+
+    public void removeReadBy(User_info user) {
+        readBy.remove(user);
+    }
+    
 }
