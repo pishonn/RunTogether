@@ -142,6 +142,11 @@ public class Crew {
         return members.contains(member);
     }
 
+    public boolean isOnlyAdminPresent() {
+        return members.size() == 1 && members.contains(admin);
+    }
+    
+
     public int getTotalPoints() {
         int totalPoints = 0;
         for (User_info member : members) {

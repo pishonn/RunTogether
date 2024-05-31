@@ -561,7 +561,7 @@
                     <h2 style="margin-left: 20px; margin-top: 50px">💬</h2>
                 </div>
                 <div id="chatRoomBody">
-                    <!-- 채팅 내용이 표시될 부분 -->
+                    <!-- 채팅 표시 -->
                 </div>
                 <div id="chatRoomFooter">
                     <input type="text" id="chatMessage" placeholder="Enter 키로 메세지 전송">
@@ -640,7 +640,7 @@
             <table class="ranking-table">
                 <hr class="divider"> <!-- 구분선 -->
                 <b>멤버</b>
-                <tr th:if="${crew.members.isEmpty()}">
+                <tr th:if="${crew.isOnlyAdminPresent()}">
                     <td colspan="4" style="color: gray;">아직 멤버가 없습니다.</td>
                 </tr>
                 
@@ -668,11 +668,12 @@
 
         <div th:if="${crew == null}">
             <p style="color: darkgray; font-size: 13px">아직 크루에 소속되어 있지 않습니다.</p>
-            <button id="button" onclick="openSearchModal()">크루 검색</button>
+            <!-- <button id="button" onclick="openSearchModal()">크루 검색</button> -->
             <button id="button" onclick="window.location.href='/board?type=crew'">크루 모집 게시판</button>
             <button id="button" onclick="window.location.href='/createCrew'">크루 생성</button>
         </div>
 
+        <!--
         <div id="searchModal" class="modal" th:if="${crew == null}">
             <div class="modal-content">
                 <span class="close" onclick="closeSearchModal()">&times;</span>
@@ -696,22 +697,21 @@
                         <input type="checkbox" id="joinable" name="joinable">
                     </label>
                 </form>
-                <hr class="divider"> <!-- 구분선 -->
+                <hr class="divider"> 
 
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
-
+        -->
     </div>
 
     <script>
+        /*
         function openSearchModal() {
-            // 검색 폼 초기화
             document.getElementById('crewName').value = '';
             document.getElementById('region').selectedIndex = 0; // 첫 번째 옵션 선택
             document.getElementById('joinable').checked = false; // 체크 해제
         
-            // 검색 결과 초기화
             const resultsDiv = document.getElementById('searchResults');
             resultsDiv.innerHTML = '';
         
@@ -768,7 +768,8 @@
                 resultsDiv.innerHTML = '<p>검색 결과를 가져오는 중 오류가 발생했습니다.</p>';
             });
         }
-        
+        */
+
         function joinCrew(crewId) {
             alert(`크루 ID: ${crewId}에 가입 신청되었습니다.`);
         }

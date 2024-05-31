@@ -133,6 +133,10 @@
             box-sizing: border-box; /* padding과 border를 width에 포함 */
             padding: 15px;
         }
+
+        
+        
+          
     </style>
 </head>
 <body>
@@ -154,7 +158,7 @@
         <p class="content" th:text="${post.content}">게시글 내용</p>
 
         <form th:if="${post.type == 'crew'}" th:action="@{/applyCrew/{userId}/{postId}(userId=${post.userId}, postId=${post.id})}" method="post">
-            <button type="submit" id="button" style="display: inline-block; margin-top: 10px; background-color: brown;">가입 신청</button>
+            <button type="submit" class="metallic" id="button" style="display: inline-block; margin-top: 10px; background-color: transparent; color: #007bff; border: 1px solid #007bff; font-weight: bold;">가입 신청</button>
         </form>        
         <button th:onclick="|window.location.href='@{/board?(type=${post.type})}'|" id="button" style="display: inline-block; margin-right: 3px; background-color: green;">목록으로</button>
         <button th:onclick="'confirmDelete(' + ${post.id} + ')'" id="button" style="display: inline-block;">삭제</button>
