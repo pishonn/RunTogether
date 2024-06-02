@@ -416,7 +416,7 @@
         .chat-message.right .message-content {
             background-color: #007bff;
             color: white;
-            margin-right: 5px; /* 시간과의 간격 조정 */
+            margin-right: 0px; /* 시간과의 간격 조정 */
         }
 
         .chat-message.left .message-content {
@@ -428,7 +428,7 @@
         .message-time {
             font-size: 10px;
             color: #999;
-            display: inline-block;
+            display: block;
             align-self: flex-end; /* 요소를 하단에 정렬 */
             margin-bottom: 3px;
         }
@@ -443,6 +443,7 @@
 
         .message-container {
             display: flex;
+            flex-direction: column;
             align-items: center;
             max-width: 100%;
         }
@@ -479,6 +480,8 @@
             min-width: 10px;   
             font-size: 12px;
             display: none;
+            text-align: center;
+            justify-content: center;
         }
 
         .BadgeTotal {
@@ -540,6 +543,21 @@
             border : 1px solid #007bff;
         }
         
+        .unread-count {
+            font-size: 10px;
+            color: #007bff;
+            display: block;
+            margin-bottom: 3px;
+            align-self: flex-end; /* 요소를 하단에 정렬 */
+        }
+        
+        .chat-message.right .unread-count {
+            margin-right: 5px;
+        }
+
+        .chat-message.left .unread-count {
+            margin-left: 5px;
+        }
         
         
 
@@ -802,93 +820,6 @@
             alert('아직 크루에 소속되어 있지 않습니다.');
         }
         
-
-        function toggleChatRoom() {
-            const chatRoom = document.getElementById('chatRoom');
-            chatRoom.classList.toggle('open');
-
-            const unreadChatsBadge = document.getElementById('unreadChatsBadge');
-            if (unreadChatsBadge) {
-                if (unreadChatsBadge.textContent > 0) {
-                    unreadChatsBadge.textContent = 0;
-                    unreadChatsBadge.style.display = 'none';
-                }
-            }
-
-            const totalBadge = document.getElementById('totalNotificationBadge');
-            if (totalBadge) {
-                if (totalBadge.textContent > 0) {
-                    totalBadge.textContent = 0;
-                    totalBadge.style.display = 'none';
-                }
-            }
-        }
-        
-        
-
-
-        if (document.getElementById('crewId')) {
-            document.addEventListener('DOMContentLoaded', function () {
-                const crewId = document.getElementById('crewId').value;
-                const userId = document.getElementById('userId').value;
-    
-                const socket = new SockJS('/ws');
-                const stompClient = Stomp.over(socket);
-    
-                stompClient.connect({}, function (frame) {
-                    console.log('Connected: ' + frame);
-    
-                    stompClient.subscribe('/topic/chat/' + crewId, function (message) {
-                        const data = JSON.parse(message.body);
-                        updateUnreadChatsBadge(data.unreadCount);
-                    });
-                });
-    
-                function updateUnreadChatsBadge(unreadCount) {
-                    const unreadChatsBadge = document.getElementById('unreadChatsBadge');
-                    if (unreadChatsBadge) {
-                        if (unreadCount > 0) {
-                            unreadChatsBadge.textContent = unreadCount;
-                            unreadChatsBadge.style.display = 'block';
-                        } else {
-                            unreadChatsBadge.style.display = 'none';
-                        }
-                    }
-    
-                    const totalBadge = document.getElementById('totalNotificationBadge');
-                    if (totalBadge) {
-                        const joinRequestBadge = document.getElementById('joinRequestBadge');
-                        const joinRequestsCount = joinRequestBadge ? parseInt(joinRequestBadge.textContent, 10) : 0;
-                        const totalNotifications = joinRequestsCount + unreadCount;
-                        if (totalNotifications > 0) {
-                            totalBadge.textContent = totalNotifications;
-                            totalBadge.style.display = 'block';
-                        } else {
-                            totalBadge.style.display = 'none';
-                        }
-                    }
-                }
-    
-                function markMessageAsRead(messageId) {
-                    fetch(`/readMessage?messageId=${messageId}&userId=${userId}`, {
-                        method: 'POST'
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            console.log('Message marked as read');
-                        } else {
-                            console.error('Failed to mark message as read');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error marking message as read:', error);
-                    });
-                }
-            });
-        }
-                
-        
-        
         
     
     </script>
@@ -952,7 +883,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-    <script th:if="${crew != null}">
+    <script th:if="${crew != null}" th:inline="javascript">
         let stompClient = null;
         let currentUserName = null;
         let crewId = null;
@@ -972,7 +903,7 @@
             console.log('Crew ID set to:', crewId);
 
             stompClient.subscribe('/topic/public', onMessageReceived);
-
+            
             loadChatHistory();
         }
 
@@ -1019,10 +950,63 @@
                     }).catch(error => {
                         console.error('Error:', error);
                     });
+                } else if (messageContent.match(/gpt야|지피티야/i)){
+                    fetch('/chat/trigger-gpt2', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `crewId=${crewId}&prompt=${messageContent}`
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log('GPT request triggered successfully.');
+                        } else {
+                            console.error('Failed to trigger GPT request.');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
                 }
             }
         }
         
+        function toggleChatRoom() {
+            const chatRoom = document.getElementById('chatRoom');
+            chatRoom.classList.toggle('open');
+        
+        
+            // 채팅방을 열 때 모든 메시지를 읽음으로 표시
+            if (chatRoom.classList.contains('open')) {
+                const crewId = document.getElementById('crewId').value;
+                const userId = document.getElementById('userId').value;
+                
+                fetch(`/readAllMessages?crewId=${crewId}&userId=${userId}`, {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('All messages marked as read');
+                        updateUnreadChatsCount(); // 읽지 않은 채팅 수 업데이트
+                    } else {
+                        console.error('Failed to mark all messages as read');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking all messages as read:', error);
+                });
+            }
+        }
+        
+    
+
+        function updateUnreadCount(messageId, unreadCount) {
+            const unreadCountElement = document.getElementById(`unread-count-${messageId}`);
+            console.log('Unread count element:', unreadCountElement);
+            if (unreadCountElement) {
+                console.log('Updating unread count:', unreadCount);
+                unreadCountElement.textContent = unreadCount > 0 ? unreadCount : '';
+            }
+        }
         
         
         function updateUnreadChatsCount() {
@@ -1032,7 +1016,7 @@
             fetch(`/unreadChatsCount?crewId=${crewId}&userId=${userId}`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Unread chats count:', data.unreadCount);
+                    console.log('Unread 뱃지 카운트 :', data.unreadCount);
                     const unreadChatsBadge = document.getElementById('unreadChatsBadge');
                     if (unreadChatsBadge) {
                         if (data.unreadCount > 0) {
@@ -1065,35 +1049,42 @@
                 });
         }
         
-        // WebSocket 연결 부분
-        document.addEventListener('DOMContentLoaded', function () {
-            const crewId = document.getElementById('crewId').value;
-            const userId = document.getElementById('userId').value;
-
-            const socket = new SockJS('/ws');
-            const stompClient = Stomp.over(socket);
-
-            stompClient.connect({}, function (frame) {
-                console.log('Connected: ' + frame);
-
-                stompClient.subscribe('/topic/chat/' + crewId, function (message) {
-                    const data = JSON.parse(message.body);
-                    updateUnreadChatsCount(); // 새로운 메시지를 받으면 읽지 않은 채팅 수를 업데이트
-                });
-            });
-
-            updateUnreadChatsCount(); // 페이지 로드 시 초기 상태 업데이트
-        });
-        
 
         function onMessageReceived(payload) {
             const message = JSON.parse(payload.body);
             console.log('Message received:', message);
+
+            const chatRoom = document.getElementById('chatRoom');
+            if (chatRoom.classList.contains('open')) {
+                const crewId = document.getElementById('crewId').value;
+                const userId = document.getElementById('userId').value;
+                
+                fetch(`/readAllMessages?crewId=${crewId}&userId=${userId}`, {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('All messages marked as read');
+                        updateUnreadChatsCount(); // 읽지 않은 채팅 수 업데이트
+                    } else {
+                        console.error('Failed to mark all messages as read');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking all messages as read:', error);
+                });
+            }
+            
             updateUnreadChatsCount();
             displayMessage(message);
         }
 
         function displayMessage(message) {
+
+            if (message.type === 'readAll') {
+                return;
+            }
+
             console.log('Displaying message:', message); // 디버깅용
         
             const chatRoomBody = document.getElementById('chatRoomBody');
@@ -1125,19 +1116,30 @@
             messageContent.classList.add('message-content');
         
             // ** **로 둘러싸인 텍스트를 <b> 태그로 변환
-            const formattedContent = message.content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            const formattedContent = (message.content || "").replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
             messageContent.innerHTML = formattedContent;
             
             console.log("messageContent: ", messageContent)
             const timeElement = document.createElement('div');
             timeElement.classList.add('message-time');
             timeElement.textContent = `${String(messageDate.getHours()).padStart(2, '0')}:${String(messageDate.getMinutes()).padStart(2, '0')}`;
-        
+            
+            const unreadCountElement = document.createElement('div');
+            unreadCountElement.classList.add('unread-count');
+            unreadCountElement.id = `unread-count-${message.id}`; // ID 설정
+            
+            if (message.sender === 'ChatGPT') {
+                unreadCountElement.textContent = ''; // ChatGPT 메시지는 읽음 처리하지 않음
+            } else {
+                unreadCountElement.textContent = message.unreadCount > 0 ? message.unreadCount : '';
+            }
             if (message.sender === currentUserName) {
                 messageElement.classList.add('right');
                 messageContainer.appendChild(messageContent);
                 messageContainer.appendChild(timeElement);
+                messageContainer.appendChild(unreadCountElement);
                 messageElement.appendChild(messageContainer);
+        
             } else {
                 messageElement.classList.add('left');
                 if (message.sender === 'ChatGPT') {
@@ -1145,6 +1147,7 @@
                 }
                 messageContainer.appendChild(messageContent);
                 messageContainer.appendChild(timeElement);
+                messageContainer.appendChild(unreadCountElement); 
                 
                 if (message.sender === 'ChatGPT') {
                     var profileLink = document.createElement('b');
@@ -1173,17 +1176,16 @@
                 messageElement.appendChild(messageContainer);
                 messageElement.insertBefore(profileContainer, messageElement.firstChild); // profileContainer를 messageElement의 첫 번째 자식으로 추가
             }
-        
+            
+            console.log("messageContainer: ", messageContainer)
             chatRoomBody.appendChild(messageElement);
             chatRoomBody.scrollTop = chatRoomBody.scrollHeight;
-            
         }
         
-
         function loadChatHistory() {
             const crewId = document.getElementById('crewId').value;
             console.log('Loading chat history for crew:', crewId); // 디버깅용
-
+        
             fetch(`/chat/history/${crewId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -1200,6 +1202,111 @@
                     console.error('Error loading chat history:', error);
                 });
         }
+
+        function markAllMessagesAsRead(messages) {
+            messages.forEach(message => {
+                updateUnreadCount(message.id, message.unreadCount);
+            });
+        }
+
+
+        
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const crewId = document.getElementById('crewId').value;
+            const userId = document.getElementById('userId').value;
+            
+            updateUnreadChatsCount();
+
+            async function fetchAndUpdateBadges() {
+                try {
+                    
+                    let joinRequestCount = 0;
+                    const adminId = /*[[${crew.admin.id}]]*/ 
+                    const userId = /*[[${userData.id}]]*/ 
+                    console.log('adminId:', adminId);
+                    console.log('userId:', userId); 
+                    if (adminId === userId) {
+                        const joinRequestResponse = await fetch(`/joinRequestsCount?crewId=${crewId}`);
+                        if (joinRequestResponse.ok) {
+                            joinRequestCount = await joinRequestResponse.json();
+                            updateJoinRequestBadge(joinRequestCount);
+                        } else {
+                            console.error('Failed to fetch join request count');
+                        }
+                    } 
+
+                    const unreadChatResponse = await fetch(`/unreadChatsCount?crewId=${crewId}&userId=${userId}`);
+                    let unreadChatCount = 0;
+                    if (unreadChatResponse.ok) {
+                        const data = await unreadChatResponse.json();
+                        unreadChatCount = data.unreadCount;
+                        updateUnreadChatsBadge(unreadChatCount);
+                    } else {
+                        console.error('Failed to fetch unread chat count');
+                    }
+
+                    updateTotalBadgeCount(joinRequestCount, unreadChatCount);
+
+                } catch (error) {
+                    console.error('Error fetching badge counts:', error);
+                }
+            }
+
+            function updateJoinRequestBadge(count) {
+                const badge = document.getElementById('joinRequestBadge');
+                if (badge) {
+                    badge.textContent = count > 0 ? count : '';
+                    badge.style.display = count > 0 ? 'block' : 'none';
+                }
+            }
+
+            function updateUnreadChatsBadge(count) {
+                const badge = document.getElementById('unreadChatsBadge');
+                if (badge) {
+                    badge.textContent = count > 0 ? count : '';
+                    badge.style.display = count > 0 ? 'block' : 'none';
+                }
+            }
+
+            function updateTotalBadgeCount(joinRequestCount, unreadChatCount) {
+                const totalBadge = document.getElementById('totalNotificationBadge');
+                const totalNotifications = joinRequestCount + unreadChatCount;
+                if (totalBadge) {
+                    if (totalNotifications > 0) {
+                        totalBadge.textContent = totalNotifications;
+                        totalBadge.style.display = 'block';
+                    } else {
+                        totalBadge.style.display = 'none';
+                    }
+                }
+            }
+
+            fetchAndUpdateBadges(); // Fetch and update all badges once when the page loads
+            
+
+            const socket = new SockJS('/ws');
+            const stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                
+                stompClient.subscribe('/topic/chat/' + crewId, function (message) {
+                    const data = JSON.parse(message.body);
+                    console.log('read data :', data)
+
+                    if (data.type === "readAll")  {
+                        markAllMessagesAsRead(data.messages); // 모든 메시지가 읽음으로 표시되면 읽지 않은 채팅 수를 업데이트
+                    } else if (data.messageId) {
+                        updateUnreadChatsCount(); // 새로운 메시지를 받으면 읽지 않은 채팅 수를 업데이트
+                    } 
+                });
+
+                
+            });
+
+            
+        });
 
         window.onload = function() {
             const crewIdElement = document.getElementById('crewId');
@@ -1221,8 +1328,7 @@
                 console.log('No crew ID found, skipping WebSocket connection');
             }
         };
-
-
+        
     </script>
 
 </body>

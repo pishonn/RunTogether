@@ -8,8 +8,9 @@ public class ChatMessageDTO {
     private String sender;
     private String profileImage;
     private Long crewId;
-    private Long senderId; // 추가된 필드
+    private Long senderId; 
     private LocalDateTime timestamp; // 타임스탬프 필드 추가
+    private int unreadCount; 
 
     // Getters and setters
     public Long getId() {
@@ -66,5 +67,13 @@ public class ChatMessageDTO {
 
     public void setSenderId(Long senderId) {
         this.senderId = senderId;
+    }
+
+    public int getUnreadCount() {
+        return unreadCount;
+    }
+
+    public void setUnreadCount(int unreadCount) {
+        this.unreadCount = unreadCount;
     }
 }

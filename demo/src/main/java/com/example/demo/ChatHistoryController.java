@@ -35,6 +35,7 @@ class ChatHistoryController {
         chatMessageDTO.setProfileImage(chatMessage.getProfileImage());
         chatMessageDTO.setCrewId(chatMessage.getCrew().getId());
         chatMessageDTO.setTimestamp(chatMessage.getTimestamp());
+        chatMessageDTO.setUnreadCount(chatMessage.getUnreadCount()); // unreadCount 설정
 
         try {
             User_info sender = userRepository.findByName(chatMessage.getSender()).orElseThrow(() -> new IllegalArgumentException("Invalid sender name"));
@@ -44,7 +45,7 @@ class ChatHistoryController {
             if ("ChatGPT".equals(chatMessage.getSender())) {
                 chatMessageDTO.setSenderId(0L); // 시스템 사용자 ID 설정
             } else {
-                throw e; // 다른 경우에는 예외를 다시 던집니다.
+                throw e;
             }
         }
 

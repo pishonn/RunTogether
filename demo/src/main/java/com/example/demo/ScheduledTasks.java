@@ -31,7 +31,6 @@ public class ScheduledTasks {
         String prompt = "주기적응답" + region;
         String messageContent = chatGptService.getAssistantResponse(ASSISTANT_ID, prompt);
 
-        // ChatMessage 엔티티 생성 및 저장
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setContent(messageContent);
         chatMessage.setSender("ChatGPT");
@@ -41,7 +40,6 @@ public class ScheduledTasks {
 
         chatMessage = chatMessageRepository.save(chatMessage);
 
-        // ChatMessageDTO 생성 및 설정
         ChatMessageDTO chatMessageDTO = new ChatMessageDTO();
         chatMessageDTO.setId(chatMessage.getId());
         chatMessageDTO.setContent(chatMessage.getContent());
@@ -51,6 +49,32 @@ public class ScheduledTasks {
         chatMessageDTO.setTimestamp(chatMessage.getTimestamp());
 
         // 메시지 전송
+        messagingTemplate.convertAndSend("/topic/public", chatMessageDTO);
+
+    }
+
+    public void sendInquiry(Long crewId, String prompt) {
+
+        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("Invalid crew ID"));
+        String messageContent = chatGptService.getAssistantResponse(ASSISTANT_ID, prompt);
+
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setContent(messageContent);
+        chatMessage.setSender("ChatGPT");
+        chatMessage.setProfileImage("/img/chatgpt.png");
+        chatMessage.setCrew(crew);
+        chatMessage.setTimestamp(LocalDateTime.now());
+
+        chatMessage = chatMessageRepository.save(chatMessage);
+
+        ChatMessageDTO chatMessageDTO = new ChatMessageDTO();
+        chatMessageDTO.setId(chatMessage.getId());
+        chatMessageDTO.setContent(chatMessage.getContent());
+        chatMessageDTO.setSender(chatMessage.getSender());
+        chatMessageDTO.setProfileImage(chatMessage.getProfileImage());
+        chatMessageDTO.setCrewId(chatMessage.getCrew().getId());
+        chatMessageDTO.setTimestamp(chatMessage.getTimestamp());
+
         messagingTemplate.convertAndSend("/topic/public", chatMessageDTO);
 
     }

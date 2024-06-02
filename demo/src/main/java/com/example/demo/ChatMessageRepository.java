@@ -11,10 +11,13 @@ import java.util.List;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
     List<ChatMessage> findByCrew(Crew crew);
     
-    @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.crew.id = :crewId AND :user NOT MEMBER OF m.readBy")
-    long countUnreadMessages(@Param("crewId") Long crewId, @Param("user") User_info user);
+    @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.crew.id = :crewId AND :user NOT MEMBER OF m.readBy AND m.senderId != :userId")
+    long countUnreadMessages(@Param("crewId") Long crewId, @Param("user") User_info user, @Param("userId") Long userId);
+
+    @Query("SELECT m FROM ChatMessage m WHERE m.crew.id = :crewId AND :user NOT MEMBER OF m.readBy")
+    List<ChatMessage> findUnreadMessagesByCrewAndUser(@Param("crewId") Long crewId, @Param("user") User_info user);
 
 
-
+    
 
 }
