@@ -9,7 +9,6 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.Transient;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -39,8 +38,6 @@ public class ChatMessage {
     )
     private Set<User_info> readBy = new HashSet<>();
     
-    @Transient
-    private int unreadCount;
 
     @PrePersist
     protected void onCreate() {
@@ -123,10 +120,6 @@ public class ChatMessage {
 
     public int getUnreadCount() {
         return this.crew.getMembers().size() - this.readBy.size();
-    }
-
-    public void setUnreadCount(int unreadCount) {
-        this.unreadCount = unreadCount;
     }
     
 }

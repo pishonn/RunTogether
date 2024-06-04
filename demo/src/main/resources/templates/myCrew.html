@@ -933,7 +933,7 @@
                 stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
                 messageInput.value = '';
         
-                // 특정 키워드가 포함된 메시지인 경우 GPT 요청을 트리거
+                // 특정 키워드가 포함된 메시지인 경우 GPT 요청을 트리거함. i는 대소문자 구분을 무시함
                 if (messageContent.match(/gpt|지피티/i) && messageContent.match(/목적지|장소|곳/i) && messageContent.match(/추천|제안|어디/i)) {
                     fetch('/chat/trigger-gpt', {
                         method: 'POST',
@@ -1128,11 +1128,11 @@
             unreadCountElement.classList.add('unread-count');
             unreadCountElement.id = `unread-count-${message.id}`; // ID 설정
             
-            if (message.sender === 'ChatGPT') {
-                unreadCountElement.textContent = ''; // ChatGPT 메시지는 읽음 처리하지 않음
-            } else {
-                unreadCountElement.textContent = message.unreadCount > 0 ? message.unreadCount : '';
-            }
+            // if (message.sender === 'ChatGPT') {
+                // unreadCountElement.textContent = ''; // ChatGPT 메시지는 읽음 처리하지 않음
+            //} else {
+            unreadCountElement.textContent = message.unreadCount > 0 ? message.unreadCount : '';
+            //}
             if (message.sender === currentUserName) {
                 messageElement.classList.add('right');
                 messageContainer.appendChild(messageContent);
@@ -1296,9 +1296,9 @@
                     console.log('read data :', data)
 
                     if (data.type === "readAll")  {
-                        markAllMessagesAsRead(data.messages); // 모든 메시지가 읽음으로 표시되면 읽지 않은 채팅 수를 업데이트
+                        markAllMessagesAsRead(data.messages); // readAll로 전송된 메세지들의 unreadCount를 갱신, 채팅방 입장한 상태
                     } else if (data.messageId) {
-                        updateUnreadChatsCount(); // 새로운 메시지를 받으면 읽지 않은 채팅 수를 업데이트
+                        updateUnreadChatsCount(); // 유저가 readby에 포함되지 않은 메세지 수를 뷰에 업데이트, 채팅방 나간 상태
                     } 
                 });
 

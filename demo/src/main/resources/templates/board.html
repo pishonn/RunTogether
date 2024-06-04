@@ -178,14 +178,15 @@
             </tr>
         </table>
         <div class="pagination">
-            <a th:if="${currentPage > 1}" th:href="@{/board(page=${currentPage - 2})}">이전</a>
+            <a th:if="${currentPage > 1}" th:href="@{/board(page=${currentPage - 2})}">이전</a> <!-- currentPages는 뷰에 전달될 때에는 +1 되어 전달되고 (뷰에 표기되어야 하기 때문), 다시 서버에 전달할 때는 0베이스로 전달해야 하기 때문에 1의 차이가 나게됨, 따라서 -1 페이지를 요청하려면 -2를 해야함 -->
             <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
                th:classappend="${i == currentPage} ? 'active'"
                th:href="@{/board(page=${i - 1})}"
-               th:text="${i}">1</a>
+               th:text="${i}"></a>
             <a th:if="${currentPage < totalPages}" th:href="@{/board(page=${currentPage})}">다음</a>
         </div>
         <form action="/board" method="get">
+            <input type="hidden" name="type" th:value="${type}"/>
             <input type="text" id="search-box" name="search" placeholder="🔍 검색어 입력 후 Enter" th:value="${search}" />
         </form>
     </div>
@@ -196,13 +197,19 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const searchBox = document.getElementById('search-box');
+        const typeInput = document.querySelector('input[name="type"]');
+        const type = typeInput ? typeInput.value : '';
 
         searchBox.addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
-                event.preventDefault(); // 엔터 키의 기본 동작인 폼 제출을 막습니다.
+                event.preventDefault(); // 엔터 키의 기본 동작인 폼 제출 제한
                 const searchValue = searchBox.value.trim();
-                // 현재 URL에 검색어를 추가하고 새로고침합니다.
-                window.location.href = window.location.pathname + '?search=' + encodeURIComponent(searchValue);
+                // 현재 URL에 검색어 추가하고 새로고침함
+                if (type) {
+                    window.location.href = window.location.pathname + '?type=' + type + '&search=' + encodeURIComponent(searchValue);
+                } else {
+                    window.location.href = window.location.pathname + '?search=' + encodeURIComponent(searchValue);
+                }
             }
         });
     });

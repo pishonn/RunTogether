@@ -52,7 +52,7 @@ public class User_info {
     @Column
     private double minDistance = 0.2;
 
-    @JsonManagedReference
+    @JsonManagedReference   
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ScoreHistory> scoreHistory = new ArrayList<>();
 
