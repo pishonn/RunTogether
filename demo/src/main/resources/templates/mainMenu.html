@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 메뉴</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="mainMenu">
+            <h2>안녕하세요. <span th:text="${name}"></span>님!</h2>
+            <button class="menu-button" data-hover-text="🔥" th:onclick="|window.location.href='@{/userDetails}'|" data-original-text="달리기">달리기</button>
+            <button class="menu-button" data-hover-text="⚙️" th:onclick="|window.location.href='@{/settings}'|" data-original-text="설정">설정</button>
+            <button class="menu-button" data-hover-text="📅" th:onclick="|window.location.href='@{/scoreHistory}'|" data-original-text="기록">기록</button>
+            <button class="menu-button" data-hover-text="🏆" th:onclick="|window.location.href='@{/rankings}'|" data-original-text="랭킹">랭킹</button>
+            <button class="menu-button" data-hover-text="😆" th:onclick="|window.location.href='@{/myProfile}'|" data-original-text="프로필">프로필</button>
+            <button class="menu-button" data-hover-text="📌" th:onclick="|window.location.href='@{/board}'|" data-original-text="게시판">게시판</button>
+            <button class="menu-button" data-hover-text="👋" th:onclick="|window.location.href='@{/myCrew}'|" data-original-text="크루">크루</button>
+            <button class="menu-button" data-hover-text="🚪" th:onclick="|window.location.href='@{/logout}'|" data-original-text="로그아웃">로그아웃</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        document.querySelectorAll('.menu-button').forEach(button => {
+            button.addEventListener('mouseover', function() {
+                this.textContent = this.getAttribute('data-hover-text');
+            });
+            button.addEventListener('mouseout', function() {
+                this.textContent = this.getAttribute('data-original-text');
+            });
+        });
+    </script>
+    <script th:if="${message}">
+        alert('[[${message}]]');
+    </script>
+    <script th:inline="javascript">
+        var userData = /*[[${userData}]]*/ {};
+    </script>
+</body>
+</html>

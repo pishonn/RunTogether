@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>점수 기록</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="scoreHistory">
+            <button type="button" th:onclick="|window.location.href='@{/}'|" class="back-button2"><img src="./img/arrow.png"></button>
+            <h2>기록</h2>
+            <div id="calendarContainer">
+                <div id="calendarHeader">
+                    <select id="yearSelect"></select>
+                    <select id="monthSelect"></select>
+                    <div id="calendarDays"></div>
+                </div>
+                <div id="calendar"></div>
+            </div>
+            <h3>이전 기록 : </h3>
+            <ul id="scoreList"></ul>
+        </div>
+    </div>
+    <script>
+        window.onload = function() {
+            showScoreHistory();
+        };
+    </script>
+    <script th:inline="javascript">
+        var sh = /*[[${sh}]]*/ {};
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
