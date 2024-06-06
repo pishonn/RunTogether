@@ -61,6 +61,10 @@ public class User_info {
     @JoinColumn(name = "crew_id")
     private Crew crew;
 
+    @ManyToOne
+    @JoinColumn(name = "room_id")
+    private Room room;
+
     @Column
     private int totalPoints = 0;
 
@@ -189,6 +193,14 @@ public class User_info {
         this.lastEnteredChatTime = lastEnteredChatTime;
     }
 
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+    
     public User_info() {
         super();
     }

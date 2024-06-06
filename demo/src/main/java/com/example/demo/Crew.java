@@ -37,6 +37,9 @@ public class Crew {
     @OneToMany(mappedBy = "crew", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<JoinRequest> joinRequests = new ArrayList<>();
 
+    @OneToMany(mappedBy = "crew", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Room> room = new ArrayList<>();
+
     // getter 및 setter 추가
 
     public Crew() {
@@ -181,6 +184,22 @@ public class Crew {
         this.joinRequests.remove(joinRequest);
     }
 
+    public List<Room> getRoom() {
+        return room;
+    }
+
+    public void setRoom(List<Room> room) {
+        this.room = room;
+    }
+
+    public void addRoom(Room room) {
+        this.room.add(room);
+    }
+
+    public void removeRoom(Room room) {
+        this.room.remove(room);
+    }
+ 
     @Override
     public String toString() {
         return "Crew{" +

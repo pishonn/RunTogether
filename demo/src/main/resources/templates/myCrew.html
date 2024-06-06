@@ -597,24 +597,30 @@
             <div class="sidebar">
                 <img style="margin-top: 14px;" class="main-icon" src="./img/side-menu.png">
                 <span id="totalNotificationBadge" class="BadgeTotal">0</span>
-                <button th:if="${crew != null}" th:onclick="|window.location.href='@{/crewProfile/{id}(id=${crew.id})}'|">
+                <button title="정보" th:if="${crew != null}" th:onclick="|window.location.href='@{/crewProfile/{id}(id=${crew.id})}'|">
                     <img src="./img/info.png">
                 </button>
-                <button th:if="${crew == null}" onclick="noCrewAlert()">
+                <button title="정보" th:if="${crew == null}" onclick="noCrewAlert()">
                     <img src="./img/info.png">
                 </button>
-                <button th:if="${crew != null}" style="margin-top: -18px;" onclick="toggleChatRoom()">
+                <button title="채팅방" th:if="${crew != null}" style="margin-top: -18px;" onclick="toggleChatRoom()">
                     <img src="./img/chat.png">
                     <span id="unreadChatsBadge" class="Badge">0</span>
                 </button>
-                <button th:if="${crew == null}" style="margin-top: -18px;" onclick="noCrewAlert()">
+                <button title="채팅방" th:if="${crew == null}" style="margin-top: -18px;" onclick="noCrewAlert()">
                     <img src="./img/chat.png">
                 </button>
-                <button style="margin-top: -18px; position: relative;" onclick="window.location.href='/approvalJoinRequest'" th:if="${crew != null && crew.admin == userData}">
+                <button title="경주" style="margin-top: -18px; position: relative;" th:if="${crew != null}" th:onclick="|window.location.href='@{/raceRoom/{id}(id=${crew.id})}'|">
+                    <img src="./img/race.png">
+                </button>
+                <button title="경주" style="margin-top: -18px; position: relative;" th:if="${crew == null}" onclick="noCrewAlert()">
+                    <img src="./img/race.png">
+                </button>
+                <button title="가입 승인" style="margin-top: -18px; position: relative;" onclick="window.location.href='/approvalJoinRequest'" th:if="${crew != null && crew.admin == userData}">
                     <img src="./img/join-request.png">
                     <span id="joinRequestBadge" class="Badge">0</span>
                 </button>                
-                <button style="margin-top: -18px;" onclick="window.location.href='/editCrewProfile'" id="settings-btn" th:if="${crew != null && crew.admin == userData}">
+                <button title="정보 수정" style="margin-top: -18px;" onclick="window.location.href='/editCrewProfile'" id="settings-btn" th:if="${crew != null && crew.admin == userData}">
                     <img src="./img/setting.png">
                 </button>
             </div>
@@ -803,10 +809,10 @@
 
             // 버튼 수에 따라 패딩 크기 결정
             let paddingSize;
-            if (buttonCount == 4) {
-                paddingSize = 160; // 3개의 버튼
+            if (buttonCount == 5) {
+                paddingSize = 190; // 3개의 버튼
             } else {
-                paddingSize = 100; // 기본값
+                paddingSize = 130; // 기본값
             }
 
             // 호버 시의 패딩 적용

@@ -106,7 +106,7 @@ public class MainController {
         response.setHeader("Pragma", "no-cache");
         
         Optional<User_info> user = userRepository.findByUserId(userId);
-        session.removeAttribute("user");
+        session.removeAttribute("userId");
         if (user.isPresent() && user.get().getPw().equals(password)) {
             session.setAttribute("userId", userId);
             return "redirect:/mainMenu";
@@ -581,29 +581,22 @@ public class MainController {
 
         String currentUserId = (String) session.getAttribute("userId");
         if (currentUserId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"사용자가 로그인하지 않았습니다.\"}");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"message\":\"사용자가 로그인하지 않았습니다.\"}");
         }
 
         User_info existingUser = userRepository.findByUserId(currentUserId).orElse(null);
         if (existingUser == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\"사용자 정보를 찾을 수 없습니다.\"}");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\":\"사용자 정보를 찾을 수 없습니다.\"}");
         }
 
-        updateUserData(existingUser, userData);
+        existingUser.setSelectedMode(userData.getSelectedMode());
+        existingUser.setSelectedPlaces(userData.getSelectedPlaces());
+        existingUser.setSearchRadius(userData.getSearchRadius());
+        existingUser.setMinDistance(userData.getMinDistance());
 
         userRepository.save(existingUser);
         return ResponseEntity.ok("{\"message\":\"설정이 업데이트 되었습니다.\"}");
     }
-
-    private void updateUserData(User_info existingUser, User_info newData) {
-        existingUser.setSelectedMode(newData.getSelectedMode());
-        existingUser.setSelectedPlaces(newData.getSelectedPlaces());
-        existingUser.setSearchRadius(newData.getSearchRadius());
-        existingUser.setMinDistance(newData.getMinDistance());
-    }
-
-
-
 
 
 
@@ -671,15 +664,15 @@ public class MainController {
 
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 되어 있지 않음");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"message\":\"로그인이 필요합니다.\"}");
         }
-        
-        Optional<User_info> optionalUser = userRepository.findByUserId(userId); // 세션에 남아있는 유저 어이디로 유저 정보 반환받음
+
+        Optional<User_info> optionalUser = userRepository.findByUserId(userId); 
         if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("유저를 찾을 수 없음");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\":\"유저를 찾을 수 없습니다.\"}");
         }
         
-        User_info user = optionalUser.get(); // 옵셔널 객체로 받은 유저 정보를 유저 인포 객체로 변환
+        User_info user = optionalUser.get(); 
 
         ScoreHistory newScore = new ScoreHistory(
             scoreDto.getType(), 
@@ -689,19 +682,19 @@ public class MainController {
             scoreDto.getDistance(), 
             scoreDto.getTime(), 
             user
-        ); // 뷰에서 리퀘스트 바디로 전달받은 정보 세팅
+        ); 
 
         System.out.println("점수 추가 : " + newScore);
 
-        user.getScoreHistory().add(newScore); // 세팅한 점수 기록을 유저 정보에 추가
-        userRepository.saveAndFlush(user); // 세이브앤플러쉬로 즉시 적용
+        user.getScoreHistory().add(newScore); 
+        userRepository.saveAndFlush(user); 
         
-        ScoreResult scoreResult = userService.updateScore(user); // 유저 서비스 클래스에서 총 점수와 총 이동거리 정보 업데이트
+        ScoreResult scoreResult = userService.updateScore(user); 
         if (scoreResult == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("점수 업데이트 실패");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\":\"점수 업데이트에 실패했습니다.\"}");
         }
         
-        return ResponseEntity.ok(scoreResult.getTotalPoints()); // 뷰에서 fetch로 요청한 정보 반환
+        return ResponseEntity.ok(scoreResult.getTotalPoints());
     }
 
     @GetMapping("/myProfile")
@@ -791,9 +784,6 @@ public class MainController {
             return "redirect:/login";
         }
 
-        System.out.println("currentUser: " + currentUser);
-        System.out.println("user: " + user);
-
         user.setId(currentUser.getId());
         if (userService.updateUserInfo(user, currentUser)) {
             session.setAttribute("userId", userId);
@@ -863,7 +853,7 @@ public class MainController {
             userRepository.save(userData);
             return ResponseEntity.ok("프로필 이미지가 업데이트 되었습니다.");
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자 정보를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\":\"유저 정보를 찾을 수 없습니다.\"}");
         }
     }
 
