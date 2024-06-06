@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Race Rooms</title>
+    <meta name="viewport" content="width=device-width, maximum-scale=1, user-scalable=no">
+    <title>경주하기</title>
+    <link rel="stylesheet" href="/style.css">
     <style>
         .container {
-            width: 600px;
+            width: 400px;
             margin: 0 auto;
             text-align: center;
         }
@@ -17,93 +17,147 @@
         }
 
         .button-container {
-            margin: 20px 0;
+            float: right;
         }
 
-        .room-button {
-            padding: 10px 20px;
-            margin: 5px;
-            font-size: 16px;
+        #button {
+            background-color: #007bff;
             color: white;
-            background-color: #3498db;
-            border: none;
-            border-radius: 4px;
             text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
             cursor: pointer;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .room-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .room-card h2 {
+            margin: 0 0 10px 0;
+        }
+
+        .room-card p {
+            margin: 5px 0;
+        }
+
+        .back-button2 {
+            position: relative;
+            float: right;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #ccc; /* 회색 구분선 */
+            margin: 20px 0; /* 상하 간격 */
+            margin-top: 90px;
         }
 
         .delete-button {
-            padding: 5px 10px;
-            font-size: 14px;
-            color: white;
-            background-color: red;
-            border: none;
-            border-radius: 4px;
             cursor: pointer;
+            color: lightgray;
+            font-weight: bold;
+            margin-left: 10px;
+            float: right;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
+        .delete-button:hover {
+            color: red;
         }
 
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+        .profile-container {
+            display: flex;
+            align-items: center;
+            text-align: left;
+            margin-top: 20px;
+        }
+        
+        .leader-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
-        th {
-            background-color: #f2f2f2;
+        .profile-img {
+            margin-right: 10px;
         }
+
+        .capacity {
+            position: absolute;
+            bottom: 10px;
+            right: 25px;
+            font-size: 50px;
+            color: #007bff;
+        }
+        
+        .capacity .participants {
+            color: lightgray;
+        }
+        
+        .capacity .total {
+            color: #007bff;
+        }
+
+        .capacity .full-capacity {
+            color: #007bff;
+        }
+
+        .path {
+            position: absolute;
+            top: 50px;
+            right: 30px;
+        }
+        
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Race Rooms for Crew ID: ${crewId}</h1>
+        <button type="button" th:onclick="|window.location.href='@{/myCrew}'|" class="back-button2"><img src="/img/arrow.png"></button>
+        <h1 style="margin-top: 40px;">방 목록</h1>
         <div class="button-container">
-            <a href="/raceRoom/create/${crewId}" class="room-button">Create Room</a>
+            <button th:onclick="|window.location.href='@{/roomCreate/{id}(id=${crew.id})}'|" id="button">+ 방만들기</button>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Room ID</th>
-                    <th>Start Location</th>
-                    <th>Destination</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <c:forEach var="room" items="${rooms}">
-                    <tr>
-                        <td>${room.id}</td>
-                        <td>${room.startLocation}</td>
-                        <td>${room.destination}</td>
-                        <td>${room.raceStarted ? 'Started' : 'Not Started'}</td>
-                        <td>
-                            <button class="delete-button" onclick="deleteRoom(${crewId}, ${room.id})">Delete</button>
-                        </td>
-                    </tr>
-                </c:forEach>
-            </tbody>
-        </table>
+        <hr class="divider">
+        <div th:if="${rooms.isEmpty()}" style="color: gray; margin-top: 40px; margin-bottom: 20px;">아직 생성된 방이 없습니다.</div>
+        
+        <div th:each="room : ${rooms}" class="room-card" style="position: relative;">
+            <span class="delete-button" th:onclick="|if (confirm('정말로 삭제하시겠습니까?')) { window.location.href='@{/roomDelete/{crewId}/{roomId}(crewId=${crew.id}, roomId=${room.id})}' }|">X</span>
+            <h2>ROOM <span th:text="${room.id}"></span></h2>
+            <div class="profile-container">
+                <div class="leader-info">
+                    <span>Leader:</span>
+                    <a style="margin-top:10px;" th:href="@{/profile/{id}(id=${room.admin.Id})}">
+                        <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${room.admin.profileImage})}" alt="프로필 사진" class="profile-img">
+                    </a>
+                    <b><span th:text="${room.admin.userId}"></span></b>
+                </div>
+            </div>
+            <div class="path">
+                <p><b><span th:text="${room.startLocation}"></span></b> → <b><span th:text="${room.destination}"></span></b></p>
+            </div>
+            <p>상태 : <span th:text="${room.raceStarted ? '경주 중' : '준비 중'}"></span></p>
+            <p>생성일자 : <span th:text="${#temporals.format(room.createdDate, 'yyyy-MM-dd HH:mm')}"></span></p>
+            <p class="capacity">
+                <span class="participants" th:text="${room.getParticipantsCount()}" th:classappend="${room.getParticipantsCount() == room.getCapacity()} ? 'full-capacity' : 'participants'"></span> / 
+                <span class="total" th:text="${room.getCapacity()}"></span>
+            </p>
+        </div>
     </div>
-
-    <script>
-        function deleteRoom(crewId, roomId) {
-            fetch(`/raceRoom/delete/${crewId}/${roomId}`, {
-                method: 'DELETE'
-            }).then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert('Failed to delete room');
-                }
-            });
-        }
-    </script>
 </body>
-
+<script th:if="${message}">
+    alert('[[${message}]]');
+</script>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
     <title>Create Room</title>
     <style>
         .container {
@@ -23,8 +23,8 @@
 
         #button {
             display: block;
-            padding: 10px 30px;
-            width: 150px;
+            padding: 10px 10px;
+            width: 100px;
             margin: 0 auto;
             margin-top: 20px;
             background-color: #007bff;
@@ -35,29 +35,28 @@
             border: none;
         }
 
-        #button:hover {
-            background-color: #0056b3;
-        }
     </style>
 </head>
 <body>
+    
     <div class="container">
-        <h1>Create Room for Crew ID: ${crewId}</h1>
-        <form action="/raceRoom/create/${crewId}" method="post">
-            <label for="adminId">Admin ID:</label>
-            <input type="number" id="adminId" name="adminId" required>
-
-            <label for="capacity">Capacity:</label>
+        <h1>방 만들기</h1>
+        <form th:action="@{'/roomCreate/' + ${crewId}}" method="post">
+            <input type="hidden" id="userId" name="userId" th:value="${userId}">
+            <label for="capacity">정원 :</label>
             <input type="number" id="capacity" name="capacity" required>
 
-            <label for="startLocation">Start Location:</label>
+            <label for="startLocation">출발지 :</label>
             <input type="text" id="startLocation" name="startLocation" required>
 
-            <label for="destination">Destination:</label>
+            <label for="destination">목적지 :</label>
             <input type="text" id="destination" name="destination" required>
 
-            <button type="submit" id="button">Create Room</button>
+            <button type="submit" id="button">생성</button>
         </form>
     </div>
 </body>
+<script th:if="${message}">
+    alert('[[${message}]]');
+</script>
 </html>

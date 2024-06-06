@@ -23,7 +23,7 @@ public class RaceService {
     public Room createRoom(Long adminId, Long crewId, int capacity, String startLocation, String destination) {
         User_info admin = userRepository.findById(adminId).orElseThrow(() -> new IllegalArgumentException("Invalid admin Id"));
         Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("Invalid crew Id"));
-
+        
         Room room = new Room();
         room.setAdmin(admin);
         room.setCrew(crew);
@@ -33,7 +33,10 @@ public class RaceService {
         room.setDestination(destination);
         room.setRaceStarted(false);
         room.setParticipantsReady(new ArrayList<>());
+        room.setParticipants(new ArrayList<>());
 
+        room.getParticipants().add(admin);
+        admin.setRoom(room); 
         return roomRepository.save(room);
     }
 

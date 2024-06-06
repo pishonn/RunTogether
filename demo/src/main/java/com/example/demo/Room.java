@@ -25,7 +25,7 @@ public class Room {
     private User_info admin;
 
     @ManyToOne
-    @JoinColumn(name = "crew_id", nullable = false)
+    @JoinColumn(name = "crew_id")
     private Crew crew;
 
     private LocalDateTime createdDate;
@@ -125,5 +125,9 @@ public class Room {
         this.participantsReady = participantsReady;
     }
 
-    
+    public int getParticipantsCount() {
+        return participants.size();
+    }
+
+
 }
