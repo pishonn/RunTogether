@@ -1,6 +1,5 @@
 package com.example.demo;
 
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -70,14 +69,26 @@ public class RaceController {
         }
 
         Long uid = user.getId();
+        int maxParticipants = crew.getCapacity();
         model.addAttribute("crewId", crewId);
         model.addAttribute("userId", uid);
+        model.addAttribute("maxParticipants", maxParticipants);
+
+        
+        List<ScoreHistory> scoreHistoryList = user.getScoreHistory();
+        System.out.println("Score history list: " + scoreHistoryList);
+        int totalPoints = scoreHistoryList.stream().mapToInt(ScoreHistory::getPoints).sum();
+
+        System.out.println("Total points calculated: " + totalPoints);
+
+        model.addAttribute("userData", user);
+        model.addAttribute("totalPoints", totalPoints);
         return "createRoom";
     }
 
     @PostMapping("/roomCreate/{crewId}")
     public String createRoom(@PathVariable Long crewId, @RequestParam Long userId, @RequestParam int capacity, 
-    @RequestParam String startLocation, @RequestParam String destination, RedirectAttributes redirectAttributes) {
+    @RequestParam String startLocation, @RequestParam String destination, RedirectAttributes redirectAttributes, Model model) {
 
         User_info admin = userRepository.findById(userId).orElse(null);
         Crew crew = crewRepository.findById(crewId).orElse(null);
@@ -97,7 +108,6 @@ public class RaceController {
             return "redirect:/mainMenu";
         }
         
-     
         System.out.println("Admin Room: " + (admin.getRoom() != null ? admin.getRoom().getId() : "null"));
 
         Room existedRoom = roomRepository.roomCotainsUser(crewId, admin).orElse(null);

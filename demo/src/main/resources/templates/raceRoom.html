@@ -25,7 +25,6 @@
             color: white;
             text-decoration: none;
             padding: 10px 20px;
-            border-radius: 4px;
             border: none;
             cursor: pointer;
         }
@@ -38,10 +37,11 @@
 
         .room-card {
             border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
+            border-radius: 30px;
+            padding: 20px;
             margin: 15px 0;
             text-align: left;
+            position: relative;
         }
 
         .room-card h2 {
@@ -82,17 +82,21 @@
             text-align: left;
             margin-top: 20px;
         }
-        
+                
         .leader-info {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            text-align: center;
+            text-align: left;
+            font-size: 20px;
+            /* margin-left: 10px; */
         }
-
+        
         .profile-img {
             margin-right: 10px;
         }
+        
+
 
         .capacity {
             position: absolute;
@@ -115,9 +119,12 @@
         }
 
         .path {
-            position: absolute;
-            top: 50px;
-            right: 30px;
+
+            position: relative; 
+            padding: 10px;
+            text-align: center; 
+            align-items: center;
+
         }
         
     </style>
@@ -126,28 +133,29 @@
 <body>
     <div class="container">
         <button type="button" th:onclick="|window.location.href='@{/myCrew}'|" class="back-button2"><img src="/img/arrow.png"></button>
-        <h1 style="margin-top: 40px;">방 목록</h1>
+        <h1 style="margin-top: 40px;">🚩</h1>
         <div class="button-container">
-            <button th:onclick="|window.location.href='@{/roomCreate/{id}(id=${crew.id})}'|" id="button">+ 방만들기</button>
+            <button th:onclick="|window.location.href='@{/roomCreate/{id}(id=${crew.id})}'|" id="button">+ 방 만들기</button>
         </div>
         <hr class="divider">
         <div th:if="${rooms.isEmpty()}" style="color: gray; margin-top: 40px; margin-bottom: 20px;">아직 생성된 방이 없습니다.</div>
         
-        <div th:each="room : ${rooms}" class="room-card" style="position: relative;">
+        <div th:each="room : ${rooms}" class="room-card">
             <span class="delete-button" th:onclick="|if (confirm('정말로 삭제하시겠습니까?')) { window.location.href='@{/roomDelete/{crewId}/{roomId}(crewId=${crew.id}, roomId=${room.id})}' }|">X</span>
             <h2>ROOM <span th:text="${room.id}"></span></h2>
+            <div class="path">
+                <p><b>출발 : <span th:text="${room.startLocation}"></span></b><br><b>도착 : <span th:text="${room.destination}"></span></b></p>
+            </div>
             <div class="profile-container">
+                <!-- <p style="align-self:flex-end">Leader:</p> -->
                 <div class="leader-info">
-                    <span>Leader:</span>
-                    <a style="margin-top:10px;" th:href="@{/profile/{id}(id=${room.admin.Id})}">
+                    <a style="display:inline-block;" th:href="@{/profile/{id}(id=${room.admin.Id})}">
                         <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${room.admin.profileImage})}" alt="프로필 사진" class="profile-img">
                     </a>
-                    <b><span th:text="${room.admin.userId}"></span></b>
+                    <b style="margin-bottom:5px;"><span th:text="${room.admin.userId}"></span></b>
                 </div>
             </div>
-            <div class="path">
-                <p><b><span th:text="${room.startLocation}"></span></b> → <b><span th:text="${room.destination}"></span></b></p>
-            </div>
+            
             <p>상태 : <span th:text="${room.raceStarted ? '경주 중' : '준비 중'}"></span></p>
             <p>생성일자 : <span th:text="${#temporals.format(room.createdDate, 'yyyy-MM-dd HH:mm')}"></span></p>
             <p class="capacity">

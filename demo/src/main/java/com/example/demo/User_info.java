@@ -61,6 +61,7 @@ public class User_info {
     @JoinColumn(name = "crew_id")
     private Crew crew;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "room_id")
     private Room room;
