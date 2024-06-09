@@ -169,7 +169,7 @@ function processResults(results, status, idx2, userLocation) {
     });
 
     if (results.length==0){
-        alert('검색된 장소가 없네요. 검색 반경(최대 50000m) 또는 최소 거리를 수정해주세요!');
+        alert('검색된 장소가 없네요. 검색 반경(최대 50000m) 또는 최소 거리를 수정하고 다시 시도해주세요!');
         return showMainMenu();
     }
 
@@ -178,6 +178,7 @@ function processResults(results, status, idx2, userLocation) {
 
     resultLen = results.length
     const firstPlace = results[idx2];
+    console.log("firstPlace :", firstPlace);
     if (firstPlace) {
         const lat = firstPlace.geometry.location.lat();
         const lng = firstPlace.geometry.location.lng();
@@ -193,6 +194,96 @@ function processResults(results, status, idx2, userLocation) {
         $locName.innerHTML = `<div>목적지는 "${name}" 입니다!</div><div>직선거리 : ${dist}km</div>`
     }
 
+}
+
+function convertToGooglePlace(data) {
+    return {
+        business_status: data.business_status,
+        geometry: {
+            location: new google.maps.LatLng(data.geometry.location.lat, data.geometry.location.lng),
+            viewport: {
+                south: data.geometry.viewport.south,
+                west: data.geometry.viewport.west,
+                north: data.geometry.viewport.north,
+                east: data.geometry.viewport.east
+            }
+        },
+        icon: data.icon,
+        icon_background_color: data.icon_background_color,
+        icon_mask_base_uri: data.icon_mask_base_uri,
+        name: data.name,
+        place_id: data.place_id,
+        plus_code: data.plus_code,
+        rating: data.rating,
+        reference: data.reference,
+        scope: data.scope,
+        types: data.types,
+        user_ratings_total: data.user_ratings_total,
+        vicinity: data.vicinity,
+        photos: data.photos,
+        distance: data.distance
+    };
+}
+
+
+function processResults2(firstPlace) {
+
+    map = new google.maps.Map(document.getElementById('map'), {zoom: 15});
+    infoWindow = new google.maps.InfoWindow;
+    service = new google.maps.places.PlacesService(map);
+    geocoder = new google.maps.Geocoder();
+
+    if (!userLocation) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                    // 이제 userLocation이 설정되었으므로 여기서 firstPlace를 처리합니다.
+                    handleFirstPlace(firstPlace);
+                }, 
+                function() {
+                    handleError(true, infoWindow, map.getCenter());
+                }
+            );
+        } else {
+            handleError(false, infoWindow, map.getCenter());
+        }
+    } else {
+        // userLocation이 이미 설정되어 있으면 바로 처리합니다.
+        handleFirstPlace(firstPlace, userLocation);
+    }
+}
+
+function handleFirstPlace(firstPlace) {
+    console.log("firstPlace :", firstPlace);
+    const $resultsDiv = document.getElementById('results');
+    $resultsDiv.innerHTML = '';
+    if (firstPlace) {
+        const lat = firstPlace.geometry.location.lat();
+        const lng = firstPlace.geometry.location.lng();
+        const name = firstPlace.name;
+
+        let dist = calculateDistance(userLocation.lat(), userLocation.lng(), lat, lng);
+        const $locName = document.getElementById('locName');
+        
+        const placeElement = document.createElement('div');
+        placeElement.innerHTML = `<button id="button" onclick="naverMap('${name}', ${lat}, ${lng}, ${dist})">시작하기!</button><br>`;
+        $resultsDiv.appendChild(placeElement);
+
+        $locName.innerHTML = `<div>이번 레이스의 목적지는</div><div>"${name}" 입니다!</div><div>직선거리 : ${dist}km</div>`;
+
+        const marker = new google.maps.Marker({
+            position: { lat: lat, lng: lng },
+            map: map,
+            title: name
+        });
+
+        map.setCenter(userLocation);
+        infoWindow.setPosition(userLocation);
+        infoWindow.setContent('Your location');
+        infoWindow.open(map);
+
+    }
 }
 
 
@@ -467,6 +558,7 @@ function applySetting() {
     })
     .then(response => response.json()) // 응답을 JSON으로 변환
     .then(data => {
+        console.log('Success:', data);
         alert(data.message); // JSON 응답에서 메시지 추출
     })
     .catch(error => {
@@ -492,7 +584,16 @@ function displayUserDetails() {
     userLocation = null;
     console.log("totalPoints :", totalPoints);
     document.getElementById('userPoints').innerText = totalPoints;
-    initMap();
+    console.log("룸 :", room);
+    if (room) {
+        const placeData = JSON.parse(room.placeData);
+        var firstPlace = convertToGooglePlace(placeData);
+        console.log("firstPlace :", firstPlace);
+        processResults2(firstPlace);
+    } else {
+        initMap();
+    }
+    
 
     clearInterval(timerInterval);
     timerInterval = null;
@@ -662,6 +763,9 @@ function verifyForm() {
     return true;
 }
 
+function showMainMenu() {
+    history.back();
+}
 
 
 

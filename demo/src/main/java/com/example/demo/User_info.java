@@ -7,6 +7,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -20,6 +23,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User_info {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -61,11 +65,12 @@ public class User_info {
     @JoinColumn(name = "crew_id")
     private Crew crew;
 
-    @JsonBackReference
+    @JsonManagedReference
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "room_id")
     private Room room;
-
+    
     @Column
     private int totalPoints = 0;
 
@@ -231,8 +236,6 @@ public class User_info {
 
     @Override
     public String toString() {
-        return "User_info [id=" + id + ", name=" + name + ", userId=" + userId + ", pw=" + pw + ", email=" + email + ", profileImage=" + profileImage + ", selectedPlaces=" + selectedPlaces
-                + ", selectedMode=" + selectedMode + ", searchRadius="
-                + searchRadius + ", minDistance=" + minDistance + " totalPoints=" + totalPoints + " totalDistance=" + totalDistance + "]";
+        return "User_info [id=" + id + ", name=" + name + ", userId=" + userId + ", pw=" + pw + ", email=" + email + ", profileImage=" + profileImage + ", selectedMode=" + selectedMode + ", selectedPlaces=" + selectedPlaces + ", searchRadius=" + searchRadius + ", minDistance=" + minDistance + ", scoreHistory=" + scoreHistory + ", crew=" + crew + ", totalPoints=" + totalPoints + ", totalDistance=" + totalDistance + "]";
     }
 }

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>레이스</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBbuYXE96kNreYvhPaTG6Gf2u1UGQu7mxM&libraries=places"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<style>
+    .profile-img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+    }
+    
+    #button {
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+    }
+
+    #participants {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        font-size: 15px;
+        /* margin-left: 10px; */
+    }
+    
+    .ready-button {
+        margin-left: 10px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+
+    #button2 {
+        font-family: 'Pretendard';
+        border-radius: 15px;
+        border: none;
+        box-sizing: border-box;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        transition: all 0.1s ease;
+        color: white;
+    }
+
+
+    #button2:hover {
+
+        transform: scale(1.05); 
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+    }
+
+    .not-ready {
+       background-color: gray;
+    }
+
+    .ready {
+       background-color: green;
+    }
+    
+    .participants {
+        margin-bottom: 20px;
+    }
+
+    .participants #button {
+        width: 80px;
+    }
+</style>
+<body>
+    <div class="container">
+        <div id="userDetails">
+            <button type="button" th:onclick="|window.location.href='@{/}'|" class="back-button2"><img src="./img/arrow.png"></button>
+            <h2 id="locName"></h2>
+            <div id="limitTime"></div>
+            <p>현재 포인트 : <span id="userPoints"></span></p>
+            <p>참여자 목록 : <button onclick="toggleParticipants()" style="background-color:transparent; border:none; padding:0; cursor:pointer;">
+                <img id="toggleImage" src="./img/toggle-up.png" style="width: 15px; height:20px; margin-bottom:-4px;">
+            </button></p>
+            
+            <div class="participants">
+                <div id="participants" th:each="p : ${room.getParticipants()}" class="participant-${p.id}">
+                    <a style="display:inline-block;" th:href="@{/profile/{id}(id=${p.Id})}">
+                        <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${p.profileImage})}" alt="프로필 사진" class="profile-img">
+                    </a>
+                    <b style="margin-left:10px; margin-bottom:5px;">
+                        <span th:text="${p.userId}"></span>
+                        <span th:if="${p.Id == room.admin.Id}">(리더)</span>
+                    </b>
+                    <span th:if="${p.id != room.admin.id}">
+                        <button style="margin-left:10px; margin-top:5px;" id="button2" class="ready-button" th:if="${p.id == userData.id}" onclick="toggleReadyStatus()" 
+                            th:text="${room.participantsReady.contains(p) ? '준비 취소' : '준비'}"></button>
+                        <span id="button2" class="ready-button" style="margin-left:10px; margin-top:5px;font-size:13px;" th:if="${p.id != userData.id}" th:classappend="${room.participantsReady.contains(p) ? ' ready' : ' not-ready'}" 
+                            th:text="${room.participantsReady.contains(p) ? '준비 완료' : '준비 안됨'}"></span>
+                    </span>
+                </div>
+                <!-- <div style="margin-left:10px; margin-bottom:5px;" th:if="${p.id == room.admin.id && userData.id == room.admin.Id}">
+                        <button id="button" onclick="startRace()" class="ready-button">시작하기</button>
+                    </div> -->
+            </div>
+            
+            
+            <div id="map"></div>
+            <div id="results"></div>
+            <div id="changeLoc">
+                <button class="nearLoc" onclick="minusIndex()" hidden>← 더 가까운 장소</button>
+                <button class="farLoc" onclick="plusIndex()" hidden>더 먼 장소 →</button>
+            </div>
+        </div>
+    </div>
+    
+</body>
+<script>
+
+    var stompClient = null;
+
+    function connect() {
+        var socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            stompClient.subscribe('/topic/readyStatus', function (message) {
+                var update = JSON.parse(message.body);
+                updateReadyStatusOnClient(update);
+            });
+        });
+    }
+
+    function sendReadyStatus(userId, roomId, ready) {
+        stompClient.send("/app/readyStatus", {}, JSON.stringify({ 'userId': userId, 'roomId': roomId, 'ready': ready }));
+    }
+
+    function updateReadyStatusOnClient(update) {
+        var userElements = document.querySelectorAll(`.participant-${update.userId}`);
+        console.log("userElements: ", userElements);
+        userElements.forEach(function (userElement) {
+            var button = userElement.querySelector(".ready-button");
+            if (button) {
+                button.textContent = update.ready ? '준비 취소' : '준비';
+                button.classList.add(update.ready ? 'ready' : 'not-ready');
+                button.classList.remove(update.ready ? 'not-ready' : 'ready');
+            }
+    
+            var statusSpan = userElement.querySelector(".ready-button + span");
+            if (statusSpan) {
+                statusSpan.textContent = update.ready ? '준비 완료' : '준비 안됨';
+                statusSpan.classList.add(update.ready ? 'ready' : 'not-ready');
+                statusSpan.classList.remove(update.ready ? 'not-ready' : 'ready');
+            }
+        });
+    }
+
+    function toggleReadyStatus() {
+        var userId = userData.id;
+        var roomId = room.id;
+        var ready = !room.participantsReady.some(participant => participant.id === userId);
+
+        fetch('/toggleReadyStatus', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: userId, roomId: roomId, ready: ready }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                // 자신의 준비 상태 업데이트
+                console.log(data);
+                var userElements = document.querySelectorAll(`.participant-${userId}`);
+                console.log("userElements: ", userElements);
+                userElements.forEach(function(userElement) {
+                    var button = userElement.querySelector(".ready-button");
+                    if (button) {
+                        button.textContent = ready ? '준비 취소' : '준비';
+                        button.classList.add(ready ? 'ready' : 'not-ready');
+                        button.classList.remove(ready ? 'not-ready' : 'ready');
+                    }
+
+                    var statusSpan = userElement.querySelector(".ready-button + span");
+                    if (statusSpan) {
+                        statusSpan.textContent = ready ? '준비 완료' : '준비 안됨';
+                        statusSpan.classList.add(ready ? 'ready' : 'not-ready');
+                        statusSpan.classList.remove(ready ? 'not-ready' : 'ready');
+                    }
+                });
+
+                // 다른 사용자에게 업데이트 반영
+                sendReadyStatus(userId, roomId, ready);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+    window.onload = function () {
+        connect();
+        displayUserDetails();
+    };
+
+</script>
+<script th:inline="javascript">
+    var userData = /*[[${userData}]]*/ {};
+    var totalPoints = /*[[${totalPoints}]]*/ {};
+    var room = /*[[${room}]]*/ {};
+</script>
+<script src="script.js"></script>
+</html>

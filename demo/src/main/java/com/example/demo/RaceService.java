@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -32,7 +33,7 @@ public class RaceService {
         room.setStartLocation(startLocation);
         room.setDestination(destination);
         room.setRaceStarted(false);
-        room.setParticipantsReady(new ArrayList<>());
+        room.setParticipantsReady(new HashSet<>());
         room.setParticipants(new ArrayList<>());
 
         room.getParticipants().add(admin);
@@ -62,13 +63,30 @@ public class RaceService {
         return roomRepository.save(room);
     }
 
+    public Room leaveRoom(Long crewId, Long roomId, Long userId) {
+        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("Invalid crew Id"));
+        Room room = roomRepository.findByIdAndCrew(roomId, crew).orElseThrow(() -> new IllegalArgumentException("Invalid room Id or crew Id"));
+        User_info user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user Id"));
+    
+        if (!room.getParticipants().contains(user)) {
+            throw new IllegalStateException("User is not a participant of this room");
+        }
+    
+        room.getParticipants().remove(user);
+        user.setRoom(null);
+        userRepository.save(user);
+    
+        return roomRepository.save(room);
+    }
+
+    
     @Transactional
     public Room ready(Long crewId, Long roomId, Long userId) {
         Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("Invalid crew Id"));
         Room room = roomRepository.findByIdAndCrew(roomId, crew).orElseThrow(() -> new IllegalArgumentException("Invalid room Id or crew Id"));
-
-        if (!room.getParticipantsReady().contains(userId)) {
-            room.getParticipantsReady().add(userId);
+        User_info user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user Id"));
+        if (!room.getParticipantsReady().contains(user)) {
+            room.addParticipantsReady(null);
         }
 
         if (room.getParticipantsReady().size() == room.getParticipants().size()) {

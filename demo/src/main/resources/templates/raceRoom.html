@@ -119,13 +119,55 @@
         }
 
         .path {
-
             position: relative; 
             padding: 10px;
             text-align: center; 
             align-items: center;
 
         }
+        
+        .capacity #button {
+            position: absolute;
+            background-color: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+            bottom: 55px;
+            right: 0px;
+            width: 90px;
+        }
+
+        
+        .capacity #button2 {
+            font-family: 'Pretendard';
+            border-radius: 15px;
+            background-color: white;
+            cursor: pointer;
+            border: none;
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            transition: all 0.1s ease;
+            position: absolute;
+            background-color: gray;
+            color: white;
+            bottom: 55px;
+            right: 0px;
+            width: 90px;
+        }
+
+        #button2:hover {
+            background-color : #007bff;
+            transform: scale(1.05);
+            transform: color 0.5s;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+        }
+
+        .transparent {
+            opacity: 0.5;
+        }
+
         
     </style>
 </head>
@@ -140,15 +182,16 @@
         <hr class="divider">
         <div th:if="${rooms.isEmpty()}" style="color: gray; margin-top: 40px; margin-bottom: 20px;">아직 생성된 방이 없습니다.</div>
         
-        <div th:each="room : ${rooms}" class="room-card">
+        <div th:each="room : ${rooms}" th:classappend="${room.raceStarted} ? 'transparent' : ''" class="room-card">
             <span class="delete-button" th:onclick="|if (confirm('정말로 삭제하시겠습니까?')) { window.location.href='@{/roomDelete/{crewId}/{roomId}(crewId=${crew.id}, roomId=${room.id})}' }|">X</span>
             <h2>ROOM <span th:text="${room.id}"></span></h2>
             <div class="path">
                 <p><b>출발 : <span th:text="${room.startLocation}"></span></b><br><b>도착 : <span th:text="${room.destination}"></span></b></p>
+                <p style="margin-top:10px; margin-bottom:-10px;"><b style="font-size: 20px; margin-top:10px;"><span th:text="${room.distance}"></span>km</b></p>
             </div>
             <div class="profile-container">
                 <!-- <p style="align-self:flex-end">Leader:</p> -->
-                <div class="leader-info">
+                <div class="leader-info" title="리더">
                     <a style="display:inline-block;" th:href="@{/profile/{id}(id=${room.admin.Id})}">
                         <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${room.admin.profileImage})}" alt="프로필 사진" class="profile-img">
                     </a>
@@ -156,9 +199,20 @@
                 </div>
             </div>
             
-            <p>상태 : <span th:text="${room.raceStarted ? '경주 중' : '준비 중'}"></span></p>
+            <p>상태 : <span th:text="${room.raceStarted ? '경주 중!' : '준비 중'}"></span></p>
             <p>생성일자 : <span th:text="${#temporals.format(room.createdDate, 'yyyy-MM-dd HH:mm')}"></span></p>
             <p class="capacity">
+                
+                <button id="button"
+                    th:if="${userRoomId != room.id}"
+                    th:onclick="|window.location.href='@{/roomJoin/{crewId}/{roomId}(crewId=${crew.id}, roomId=${room.id})}'|">
+                    참여하기</button>
+                
+                <button id="button2"
+                    th:if="${userRoomId == room.id}"
+                    th:onclick="|window.location.href='@{/roomLeave/{crewId}/{roomId}(crewId=${crew.id}, roomId=${room.id})}'|">
+                    참여 중</button>
+
                 <span class="participants" th:text="${room.getParticipantsCount()}" th:classappend="${room.getParticipantsCount() == room.getCapacity()} ? 'full-capacity' : 'participants'"></span> / 
                 <span class="total" th:text="${room.getCapacity()}"></span>
             </p>
@@ -168,4 +222,22 @@
 <script th:if="${message}">
     alert('[[${message}]]');
 </script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        const button = document.getElementById('button2');
+
+        if (button) {
+            const originalText = button.textContent;
+
+            button.addEventListener('mouseover', function() {
+                button.textContent = '나가기';
+            });
+
+            button.addEventListener('mouseout', function() {
+                button.textContent = originalText;
+            });
+        }
+    });
+</script>
+
 </html>

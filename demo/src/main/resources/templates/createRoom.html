@@ -50,11 +50,11 @@
         }
 
         .nearLoc img{
-            width: 50px;
+            width: 30px;
         }
 
         .farLoc img{
-            width: 50px;
+            width: 30px;
         }
 
         #userDetails {
@@ -75,6 +75,11 @@
 
             <div id="startLocation" class="locName" name="startLocation"></div>
             <div id="destination" class="locName" name="destination"></div>
+            
+            <input type="hidden" id="hiddenStartLocation" name="startLocation" th:value="${startLocation}">
+            <input type="hidden" id="hiddenDestination" name="destination" th:value="${destination}">
+            <input type="hidden" id="hiddenDistance" name="distance" th:value="${distance}">
+            <input type="hidden" id="placeData" name="placeData">
            
 
             <div id="userDetails">
@@ -104,6 +109,11 @@
     let idx = 0;
     let map, infoWindow, service, geocoder;
     let userLocation = null; 
+    let userKeyword = null;
+
+    const $hiddenSl = document.getElementById('hiddenStartLocation');
+    const $hiddenLocName = document.getElementById('hiddenDestination');
+    const $hiddenDistance = document.getElementById('hiddenDistance');
 
     function minusIndex() {
 
@@ -259,6 +269,7 @@
             if (status === google.maps.GeocoderStatus.OK && results[0]) {
                 const startPlaceName = results[0].formatted_address;
                 $sl.innerHTML = `<div>출발지는 <b>"${startPlaceName}"</b> 입니다!</div>`
+                $hiddenSl.value = startPlaceName; 
             }
         });
 
@@ -279,7 +290,7 @@
         });
     
         if (results.length==0){
-            alert('검색된 장소가 없네요. 검색 반경(최대 50000m) 또는 최소 거리를 수정해주세요!');
+            alert('검색된 장소가 없네요. 검색 반경(최대 50000m) 또는 최소 거리를 수정하고 다시 시도해주세요!');
             return showMainMenu();
         }
     
@@ -295,8 +306,10 @@
     
             let dist = calculateDistance(userLocation.lat(), userLocation.lng(), lat, lng)
             const $locName = document.getElementById('destination')
-            
+            document.getElementById('placeData').value = JSON.stringify(firstPlace);
             $locName.innerHTML = `<div>목적지는 <b>"${name}"</b> 입니다!</div><div>직선거리 : <b>${dist}km</b></div>`
+            $hiddenDistance.value = dist;
+            $hiddenLocName.value = name; 
         }
     
     }
@@ -306,6 +319,10 @@
         userLocation = null;
         initMap();
     
+    }
+
+    function showMainMenu() {
+        history.back();
     }
 
     window.onload = function() {

@@ -2,17 +2,21 @@ package com.example.demo;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
-import jakarta.persistence.ElementCollection;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.validation.constraints.Min;
 
 @Entity
 public class Room {
@@ -39,11 +43,23 @@ public class Room {
 
     private boolean isRaceStarted;
 
-    @ElementCollection
-    private List<Long> participantsReady;
+    private double distance;
+    
+    @Column(columnDefinition = "LONGTEXT") // JSON 데이터를 저장할 필드 길이 늘림
+    private String placeData;
+    //@ElementCollection
+    @ManyToMany
+    @JoinTable(
+        name = "room_participants_ready",
+        joinColumns = @JoinColumn(name = "room_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
 
+    @JsonManagedReference
+    private Set<User_info> participantsReady;
+
+    @JsonManagedReference
     @OneToMany(mappedBy = "room")
-    @Min(value = 2, message = "참가자는 최소 2명 이상이어야 합니다.")
     private List<User_info> participants;
 
     // Getters and Setters
@@ -119,17 +135,44 @@ public class Room {
         this.isRaceStarted = isRaceStarted;
     }
 
-    public List<Long> getParticipantsReady() {
+    public Set<User_info> getParticipantsReady() {
         return participantsReady;
     }
 
-    public void setParticipantsReady(List<Long> participantsReady) {
+    public void setParticipantsReady(Set<User_info> participantsReady) {
         this.participantsReady = participantsReady;
+    }
+
+    public void addParticipantsReady(User_info user) {
+        participantsReady.add(user);
+    }
+
+    public void removeParticipantsReady(User_info user) {
+        participantsReady.remove(user);
     }
 
     public int getParticipantsCount() {
         return participants.size();
     }
 
+    public double getDistance() {
+        return distance;
+    }
 
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+
+    public String getPlaceData() {
+        return placeData;
+    }
+
+    public void setPlaceData(String placeData) {
+        this.placeData = placeData;
+    }
+
+    @Override
+    public String toString() {
+        return "Room [id=" + id + ", admin=" + admin + ", crew=" + crew + ", createdDate=" + createdDate + ", capacity=" + capacity + ", startLocation=" + startLocation + ", destination=" + destination + ", isRaceStarted=" + isRaceStarted + ", distance=" + distance + ", placeData=" + placeData + "]";
+    }
 }

@@ -51,6 +51,7 @@ public class MainController {
     @Autowired
     private JoinRequestRepository joinRequestRepository;
     
+    
     @Autowired
     private UserService userService;
 
@@ -616,16 +617,36 @@ public class MainController {
             redirectAttributes.addFlashAttribute("message", "로그인이 필요합니다.");
             return "redirect:/login";
         }
+
+        Room room = userData.getRoom();
+        if (room ==null) {
+            List<ScoreHistory> scoreHistoryList = userData.getScoreHistory();
+            System.out.println("Score history list: " + scoreHistoryList);
+            int totalPoints = scoreHistoryList.stream().mapToInt(ScoreHistory::getPoints).sum();
+
+            System.out.println("Total points calculated: " + totalPoints);
+
+            model.addAttribute("userData", userData);
+            model.addAttribute("totalPoints", totalPoints);
+            return "userDetails";
+
+        } else {
+            System.out.println("Room: " + room);
+            List<ScoreHistory> scoreHistoryList = userData.getScoreHistory();
+            System.out.println("Score history list: " + scoreHistoryList);
+            int totalPoints = scoreHistoryList.stream().mapToInt(ScoreHistory::getPoints).sum();
+
+            System.out.println("Total points calculated: " + totalPoints);
+
+            model.addAttribute("userData", userData);
+            model.addAttribute("totalPoints", totalPoints);
+            RoomDTO roomDTO = new RoomDTO(room);
+            System.out.println("Room DTO: " + roomDTO);
+            model.addAttribute("room", roomDTO);
+            return "userDetailsForRace";
+        }
         
-        List<ScoreHistory> scoreHistoryList = userData.getScoreHistory();
-        System.out.println("Score history list: " + scoreHistoryList);
-        int totalPoints = scoreHistoryList.stream().mapToInt(ScoreHistory::getPoints).sum();
-
-        System.out.println("Total points calculated: " + totalPoints);
-
-        model.addAttribute("userData", userData);
-        model.addAttribute("totalPoints", totalPoints);
-        return "userDetails";
+        
     }
 
     
