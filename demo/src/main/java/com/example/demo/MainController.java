@@ -3,7 +3,10 @@ package com.example.demo;
 
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,12 +33,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 
-
 @Controller
 public class MainController {
 
     // @Autowired
     // private UserRepository userRepository;
+
     @Autowired
     private PostRepository postRepository;
 
@@ -50,8 +53,19 @@ public class MainController {
 
     @Autowired
     private JoinRequestRepository joinRequestRepository;
-    
-    
+
+    @Autowired
+    private RoomRepository roomRepository;
+
+    @Autowired
+    private RoomScoreHistoryRepository roomScoreHistoryRepository;
+
+    @Autowired
+    private UserScoreHistoryRepository userScoreHistoryRepository;
+
+    @Autowired
+    private RaceService raceService;
+
     @Autowired
     private UserService userService;
 
@@ -573,8 +587,7 @@ public class MainController {
     }
 
     @PostMapping("/updateSettings")
-    public ResponseEntity<?> updateSettings(@RequestBody User_info userData, HttpSession session, HttpServletResponse response) {
-
+    public ResponseEntity<?> updateSettings(@RequestBody UserSettingsDTO userSettingsDTO, HttpSession session, HttpServletResponse response) {
         response.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
         response.addHeader("Cache-Control", "post-check=0, pre-check=0");
@@ -590,14 +603,16 @@ public class MainController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\":\"사용자 정보를 찾을 수 없습니다.\"}");
         }
 
-        existingUser.setSelectedMode(userData.getSelectedMode());
-        existingUser.setSelectedPlaces(userData.getSelectedPlaces());
-        existingUser.setSearchRadius(userData.getSearchRadius());
-        existingUser.setMinDistance(userData.getMinDistance());
+        // 사용자 설정 업데이트
+        existingUser.setSelectedMode(userSettingsDTO.getSelectedMode());
+        existingUser.setSelectedPlaces(userSettingsDTO.getSelectedPlaces());
+        existingUser.setSearchRadius(userSettingsDTO.getSearchRadius());
+        existingUser.setMinDistance(userSettingsDTO.getMinDistance());
 
         userRepository.save(existingUser);
         return ResponseEntity.ok("{\"message\":\"설정이 업데이트 되었습니다.\"}");
     }
+
 
 
 
@@ -643,6 +658,9 @@ public class MainController {
             RoomDTO roomDTO = new RoomDTO(room);
             System.out.println("Room DTO: " + roomDTO);
             model.addAttribute("room", roomDTO);
+            Crew crew = room.getCrew();
+            model.addAttribute("crew", crew);
+            model.addAttribute("crewId", crew.getId());
             return "userDetailsForRace";
         }
         
@@ -674,10 +692,9 @@ public class MainController {
         return "scoreHistory";
     }
     
-
+    @Transactional
     @PostMapping("/addScore")
     public ResponseEntity<?> addScore(@RequestBody ScoreHistoryDTO scoreDto, HttpSession session, HttpServletResponse response) {
-
         response.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
         response.addHeader("Cache-Control", "post-check=0, pre-check=0");
@@ -688,35 +705,132 @@ public class MainController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"message\":\"로그인이 필요합니다.\"}");
         }
 
-        Optional<User_info> optionalUser = userRepository.findByUserId(userId); 
+        Optional<User_info> optionalUser = userRepository.findByUserId(userId);
         if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\":\"유저를 찾을 수 없습니다.\"}");
         }
-        
-        User_info user = optionalUser.get(); 
 
-        ScoreHistory newScore = new ScoreHistory(
-            scoreDto.getType(), 
-            scoreDto.getPoints(), 
-            scoreDto.getSName(), 
-            scoreDto.getEName(), 
-            scoreDto.getDistance(), 
-            scoreDto.getTime(), 
-            user
-        ); 
+        User_info user = optionalUser.get();
+        int rank = 0; // 기본값으로 rank를 초기화합니다.
+        int rankBonus = 0;
+        // Room 점수 기록 추가
+        if ("경주 점수".equals(scoreDto.getType())) {
+            Long roomId = scoreDto.getRoomId();
+            if (roomId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\":\"Room ID가 필요합니다.\"}");
+            }
 
-        System.out.println("점수 추가 : " + newScore);
+            Optional<Room> optionalRoom = roomRepository.findById(roomId);
+            System.out.println("Room ID: " + roomId);
+            if (optionalRoom.isPresent()) {
+                Room room = optionalRoom.get();
 
-        user.getScoreHistory().add(newScore); 
-        userRepository.saveAndFlush(user); 
-        
-        ScoreResult scoreResult = userService.updateScore(user); 
-        if (scoreResult == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\":\"점수 업데이트에 실패했습니다.\"}");
+                RoomScoreHistory existingScore = roomScoreHistoryRepository.findByRoomId(room.getId()).orElse(null);
+                System.out.println("existingScore: " + existingScore);
+                if (existingScore == null) {
+                    RoomScoreHistoryDTO roomScoreHistoryDTO = new RoomScoreHistoryDTO();
+                    roomScoreHistoryDTO.setRoomId(room.getId());
+                    roomScoreHistoryDTO.setAdminId(room.getAdmin().getId());
+                    roomScoreHistoryDTO.setCreatedDate(room.getCreatedDate());
+                    roomScoreHistoryDTO.setParticipantsCount(room.getParticipantsAtRaceStart());
+                    roomScoreHistoryDTO.setStartLocation(room.getStartLocation());
+                    roomScoreHistoryDTO.setDestination(room.getDestination());
+                    roomScoreHistoryDTO.setDistance(room.getDistance());
+
+                    RoomScoreHistory roomScoreHistory = roomScoreHistoryDTO.toRoomScoreHistory(room, room.getAdmin());
+                    roomScoreHistoryRepository.save(roomScoreHistory);
+                }
+                
+                RoomScoreHistory existingScore2 = roomScoreHistoryRepository.findByRoomId(room.getId()).orElse(null);
+
+                UserScoreHistoryDTO userScoreHistoryDto = new UserScoreHistoryDTO();
+                userScoreHistoryDto.setRoomScoreHistory(existingScore2);
+                userScoreHistoryDto.setUser(user);
+                userScoreHistoryDto.setRaceEndTime(LocalDateTime.now());
+                userScoreHistoryDto.setPoints(scoreDto.getPoints());
+                userScoreHistoryDto.setCrew(room.getCrew());
+
+                UserScoreHistory userScoreHistory = userScoreHistoryDto.toUserScoreHistory(existingScore2);
+                userScoreHistoryRepository.save(userScoreHistory);
+
+                Set<UserScoreHistory> userScoresSet = userScoreHistoryRepository.findByRoomScoreHistoryOrderByRaceEndTimeAsc(existingScore);
+                List<UserScoreHistory> userScores = new ArrayList<>(userScoresSet);
+                userScores.sort(Comparator.comparing(UserScoreHistory::getRaceEndTime));
+                System.out.println("userScores.size: " + userScores.size());
+                for (int i = 0; i < userScores.size(); i++) {
+                    UserScoreHistory ush = userScores.get(i);
+                    ush.setRank(i + 1);
+                    userScoreHistoryRepository.save(ush); // rank 업데이트
+                    if (ush.getUser().equals(user)) {
+                        rank = i + 1;
+                        break;
+                    }
+                }
+                
+                
+
+                // 순위에 따른 가산점 계산
+                
+                if (rank == 1) {
+                    rankBonus = 10;
+                } else if (rank == 2) {
+                    rankBonus = 5;
+                } else if (rank == 3) {
+                    rankBonus = 3;
+                }
+
+                
+                System.out.println("rank : " + rank);
+
+                ScoreHistory newScore = new ScoreHistory(
+                    scoreDto.getType(),
+                    scoreDto.getPoints() + rankBonus,
+                    scoreDto.getSName(),
+                    scoreDto.getEName(),
+                    scoreDto.getDistance(),
+                    scoreDto.getTime(),
+                    user
+                );
+
+                System.out.println("점수 추가 : " + newScore);
+                user.getScoreHistory().add(newScore);
+                userRepository.saveAndFlush(user);
+
+                raceService.leaveRoom(room.getCrew().getId(), roomId, user.getId());
+
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\":\"방을 찾을 수 없습니다.\"}");
+            }
+        } else {
+            ScoreHistory newScore = new ScoreHistory(
+                scoreDto.getType(),
+                scoreDto.getPoints(),
+                scoreDto.getSName(),
+                scoreDto.getEName(),
+                scoreDto.getDistance(),
+                scoreDto.getTime(),
+                user
+            );
+
+            System.out.println("점수 추가 : " + newScore);
+            user.getScoreHistory().add(newScore);
+            userRepository.saveAndFlush(user);
         }
-        
-        return ResponseEntity.ok(scoreResult.getTotalPoints());
+
+        ScoreResult scoreResult = userService.updateScore(user);
+        // 응답에 rank 포함
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("totalPoints", scoreResult.getTotalPoints());
+        responseMap.put("rank", rank);
+        responseMap.put("rankBonus", rankBonus);
+
+        return ResponseEntity.ok(responseMap);
     }
+
+
+
+
+
 
     @GetMapping("/myProfile")
     public String showMyProfile(Model model, HttpSession session, HttpServletResponse response) {
@@ -1190,8 +1304,7 @@ public class MainController {
         redirectAttributes.addFlashAttribute("message", "더미 데이터를 랜덤으로 생성하였습니다.");
         return "redirect:/login";
     }
-    
-    
+
 }
 
 

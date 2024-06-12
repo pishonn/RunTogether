@@ -71,6 +71,14 @@
     .ready {
        background-color: green;
     }
+
+    .cancel {
+        background-color: red;
+    }
+
+    .not-cancel {
+        background-color: #007bff;
+    }
     
     .participants {
         margin-bottom: 20px;
@@ -79,6 +87,25 @@
     .participants #button {
         width: 80px;
     }
+
+    .none {
+        display: none;
+    }
+    
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        display: none; /* Initially hidden */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
 </style>
 <body>
     <div class="container">
@@ -92,7 +119,7 @@
             </button></p>
             
             <div class="participants">
-                <div id="participants" th:each="p : ${room.getParticipants()}" class="participant-${p.id}">
+                <div id="participants" th:each="p : ${room.getParticipants()}" th:class="'participant-' + ${p.id}">
                     <a style="display:inline-block;" th:href="@{/profile/{id}(id=${p.Id})}">
                         <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${p.profileImage})}" alt="프로필 사진" class="profile-img">
                     </a>
@@ -101,10 +128,10 @@
                         <span th:if="${p.Id == room.admin.Id}">(리더)</span>
                     </b>
                     <span th:if="${p.id != room.admin.id}">
-                        <button style="margin-left:10px; margin-top:5px;" id="button2" class="ready-button" th:if="${p.id == userData.id}" onclick="toggleReadyStatus()" 
-                            th:text="${room.participantsReady.contains(p) ? '준비 취소' : '준비'}"></button>
-                        <span id="button2" class="ready-button" style="margin-left:10px; margin-top:5px;font-size:13px;" th:if="${p.id != userData.id}" th:classappend="${room.participantsReady.contains(p) ? ' ready' : ' not-ready'}" 
-                            th:text="${room.participantsReady.contains(p) ? '준비 완료' : '준비 안됨'}"></span>
+                        <button style="margin-left:10px; margin-top:5px;" id="button2" class="ready-button" th:if="${p.id == userData.id}" onclick="toggleReadyStatus()" th:classappend="${room.participantsReady.contains(p) ? ' cancel' : ' not-cancel'}"
+                            th:text="${room.participantsReady.contains(p) ? '취소' : '준비'}"></button>
+                        <span id="button2" class="ready-status" style="margin-left:10px; margin-top:5px;font-size:13px;" th:if="${p.id != userData.id}" th:classappend="${room.participantsReady.contains(p) ? ' ready' : ' not-ready'}" 
+                            th:text="${room.participantsReady.contains(p) ? '준비 완료!' : '준비 안됨'}"></span>
                     </span>
                 </div>
                 <!-- <div style="margin-left:10px; margin-bottom:5px;" th:if="${p.id == room.admin.id && userData.id == room.admin.Id}">
@@ -121,92 +148,274 @@
             </div>
         </div>
     </div>
+
+    <div id="raceOverlay" class="overlay">
+        <div style="text-align: center;">
+            <p>레이스가 이미 시작되어 다시 참가할 수 없습니다.</p>
+            <button th:onclick="|window.location.href='@{/roomLeave/{crewId}/{roomId}(crewId=${crew.id}, roomId=${room.id})}'|">방 나가기</button>
+        </div>
+    </div>
     
 </body>
 <script>
 
     var stompClient = null;
+    var linkOpened = false;  // 링크 열림 상태를 관리하는 변수
 
     function connect() {
         var socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/readyStatus', function (message) {
+
+            var roomId = room.id;
+
+            stompClient.subscribe('/topic/readyStatus/' + roomId, function (message) {
                 var update = JSON.parse(message.body);
+                console.log("Received update: ", update);
                 updateReadyStatusOnClient(update);
             });
+
+            stompClient.subscribe('/topic/startRace/' + roomId, function (message) {
+                var data = JSON.parse(message.body);
+                startRace(data.endName, data.elat, data.elng, data.km);
+            });
+
+            stompClient.subscribe('/topic/participantUpdate/' + roomId, function (message) {
+                var update = JSON.parse(message.body);
+
+                if (update.join) {
+                    location.reload(); // 페이지 리다이렉트
+                } else {
+                    updateParticipantOnClient(update);
+                }
+            });
+            
         });
     }
 
     function sendReadyStatus(userId, roomId, ready) {
+        console.log("sendReadyStatus: ", userId, roomId, ready);
         stompClient.send("/app/readyStatus", {}, JSON.stringify({ 'userId': userId, 'roomId': roomId, 'ready': ready }));
     }
-
+    
+    
+    async function toggleReadyStatus() {
+        var userId = userData.id;
+        var roomId = room.id;
+    
+        try {
+            let response = await fetch(`/raceState/${roomId}`);
+            let data = await response.json();
+    
+            if (data.isRaceStarted) {
+                alert('레이스가 이미 시작되어 준비 상태를 변경할 수 없습니다.');
+                return; // 여기서 함수를 종료합니다.
+            }
+        } catch (error) {
+            console.error('Error fetching race state:', error);
+            return; // 오류가 발생하면 함수를 종료합니다.
+        }
+    
+        var ready = !room.participantsReady.some(participant => participant.id === userId);
+        
+        console.log("toggleReadyStatus: ", userId, roomId, ready);
+    
+        try {
+            let response = await fetch('/toggleReadyStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: userId, roomId: roomId, ready: ready }),
+            });
+            let data = await response.json();
+    
+            // 자신의 준비 상태 업데이트
+            console.log(data);
+            var userElements = document.querySelectorAll(`.participant-${userId}`);
+            console.log("userElements: ", userElements);
+            userElements.forEach(function(userElement) {
+                var button = userElement.querySelector(".ready-button");
+                console.log("button: ", button);
+                console.log("ready: ", ready);
+                if (button) {
+                    button.textContent = ready ? '취소' : '준비';
+                    console.log("button.textContent: ", button.textContent);
+                    button.classList.add(ready ? 'cancel' : 'not-cancel');
+                    button.classList.remove(ready ? 'not-cancel' : 'cancel');
+                }
+    
+                /* 
+                var statusSpan = userElement.querySelector(".ready-button + span");
+                if (statusSpan) {
+                    statusSpan.textContent = ready ? '준비 완료!' : '준비 안됨';
+                    statusSpan.classList.add(ready ? 'ready' : 'not-ready');
+                    statusSpan.classList.remove(ready ? 'not-ready' : 'ready');
+                }
+                */
+            });
+    
+            // room.participantsReady 갱신
+            if (ready) {
+                room.participantsReady.push({ id: userId });
+            } else {
+                room.participantsReady = room.participantsReady.filter(participant => participant.id !== userId);
+            }
+    
+            // 다른 사용자에게 업데이트 반영
+            sendReadyStatus(userId, roomId, ready);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    
     function updateReadyStatusOnClient(update) {
         var userElements = document.querySelectorAll(`.participant-${update.userId}`);
         console.log("userElements: ", userElements);
         userElements.forEach(function (userElement) {
+            
+            /*
             var button = userElement.querySelector(".ready-button");
             if (button) {
-                button.textContent = update.ready ? '준비 취소' : '준비';
+                button.textContent = update.ready ? '취소' : '준비';
                 button.classList.add(update.ready ? 'ready' : 'not-ready');
                 button.classList.remove(update.ready ? 'not-ready' : 'ready');
             }
-    
-            var statusSpan = userElement.querySelector(".ready-button + span");
+            */
+
+            var statusSpan = userElement.querySelector(".ready-status");
+            console.log("statusSpan: ", statusSpan);
             if (statusSpan) {
-                statusSpan.textContent = update.ready ? '준비 완료' : '준비 안됨';
+                statusSpan.textContent = update.ready ? '준비 완료!' : '준비 안됨';
                 statusSpan.classList.add(update.ready ? 'ready' : 'not-ready');
                 statusSpan.classList.remove(update.ready ? 'not-ready' : 'ready');
             }
         });
+    
+        // room.participantsReady 갱신
+        if (update.ready) {
+            room.participantsReady.push({ id: update.userId });
+        } else {
+            room.participantsReady = room.participantsReady.filter(participant => participant.id !== update.userId);
+        }
+    }
+    
+    
+    
+    
+    
+    function toggleParticipants() {
+        const participantsDiv = document.querySelector('.participants');
+        const toggleImage = document.getElementById('toggleImage');
+    
+        if (participantsDiv.classList.contains('none')) {
+            participantsDiv.classList.remove('none');
+            toggleImage.src = './img/toggle-up.png';
+        } else {
+            participantsDiv.classList.add('none');
+            toggleImage.src = './img/toggle-down.png';
+        }
+    }
+    
+    function sendStartRaceMessage(participantId, endName, elat, elng, km) {
+        var roomId = room.id;
+        stompClient.send("/app/startRace", {}, JSON.stringify({ 'participantId': participantId, 'endName': endName, 'elat': elat, 'elng': elng, 'km': km, 'roomId': roomId, 'crewId': crewId }));
     }
 
-    function toggleReadyStatus() {
-        var userId = userData.id;
-        var roomId = room.id;
-        var ready = !room.participantsReady.some(participant => participant.id === userId);
+    function startRace(endName, elat, elng, km) {
+        geocoder.geocode({'location': userLocation}, function(results, status) {
+            if (status === google.maps.GeocoderStatus.OK && results[0]) {
+                const startPlaceName = results[0].formatted_address;
+                const url = createNaverDirectionsUrl(startPlaceName, endName, elng, elat);
+    
+                if (!linkOpened) {
+                    window.open(url, '_blank');  // 링크를 열지 않은 상태에서만 열기
+                    linkOpened = true;
+                }
+                
+                const $limitTime = document.getElementById('limitTime');
+                const totalMinutes = calculateWalkTime(km); 
+                totalSeconds = totalMinutes * 60; 
+                originalSec = totalSeconds;
+    
+                // 기존 타이머를 지움
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+    
+                timerInterval = setInterval(function() {
+                    updateTimer($limitTime, elat, elng, km, startPlaceName, endName);
+                }, 1000);
+    
+                const $resultsDiv = document.getElementById('results');
+                $resultsDiv.innerHTML = '';
+                const placeElement = document.createElement('div');
+                placeElement.innerHTML = `<button id="button" onclick="verify(${elat}, ${elng}, ${km}, '${startPlaceName}', '${endName}')">도착 확인!</button><br>`;
+                $resultsDiv.appendChild(placeElement);
+    
+                getScore = false;
+            } else {
+                console.error(status);
+            }
+        });
+    }
 
-        fetch('/toggleReadyStatus', {
+    function checkRaceState() {
+        var roomId = room.id;
+        fetch(`/raceState/${roomId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.isRaceStarted) {
+                    const overlay = document.getElementById('raceOverlay');
+                    overlay.style.display = 'flex'; // Show the overlay
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching race state:', error);
+            });
+    }
+    
+
+    function startRaceHandler() {
+        var roomId = room.id;
+        fetch('/startRace', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ userId: userId, roomId: roomId, ready: ready }),
+            body: JSON.stringify({ roomId: roomId, crewId: crewId}),
         })
-            .then(response => response.json())
-            .then(data => {
-                // 자신의 준비 상태 업데이트
-                console.log(data);
-                var userElements = document.querySelectorAll(`.participant-${userId}`);
-                console.log("userElements: ", userElements);
-                userElements.forEach(function(userElement) {
-                    var button = userElement.querySelector(".ready-button");
-                    if (button) {
-                        button.textContent = ready ? '준비 취소' : '준비';
-                        button.classList.add(ready ? 'ready' : 'not-ready');
-                        button.classList.remove(ready ? 'not-ready' : 'ready');
-                    }
-
-                    var statusSpan = userElement.querySelector(".ready-button + span");
-                    if (statusSpan) {
-                        statusSpan.textContent = ready ? '준비 완료' : '준비 안됨';
-                        statusSpan.classList.add(ready ? 'ready' : 'not-ready');
-                        statusSpan.classList.remove(ready ? 'not-ready' : 'ready');
-                    }
-                });
-
-                // 다른 사용자에게 업데이트 반영
-                sendReadyStatus(userId, roomId, ready);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            if (data && data.isRaceStarted) {
+                console.log("Race started in the room");
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
     }
-
+    
+    function updateParticipantOnClient(update) {
+        var participantsDiv = document.getElementById('participants');
+        
+        // 참가자 퇴장 처리
+        var participant = document.querySelector(`.participant-${update.userId}`);
+        if (participant) {
+            participant.remove();
+        }
+        
+    }
+    
+    
+    
+    
     window.onload = function () {
         connect();
+        checkRaceState();
         displayUserDetails();
     };
 
@@ -215,6 +424,11 @@
     var userData = /*[[${userData}]]*/ {};
     var totalPoints = /*[[${totalPoints}]]*/ {};
     var room = /*[[${room}]]*/ {};
+    var crewId = /*[[${crewId}]]*/ {};
+    
 </script>
 <script src="script.js"></script>
+<script th:if="${message}">
+    alert('[[${message}]]');
+</script>
 </html>

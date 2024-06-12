@@ -7,6 +7,7 @@ public class ScoreHistoryDTO {
     private int points;
     private String time;
     private double distance;
+    private Long roomId;
 
     @JsonProperty("sName")
     private String startName;
@@ -17,13 +18,14 @@ public class ScoreHistoryDTO {
     public ScoreHistoryDTO() {
     }
 
-    public ScoreHistoryDTO(String type, int points, String sName, String eName, double distance, String time) {
+    public ScoreHistoryDTO(String type, int points, String sName, String eName, double distance, String time, Long roomId) {
         this.type = type;
         this.points = points;
         this.time = time;
         this.startName = sName;
         this.endName = eName;
         this.distance = distance;
+        this.roomId = roomId;
     }
 
     public String getType() {
@@ -74,8 +76,20 @@ public class ScoreHistoryDTO {
         this.distance = distance;
     }
 
+    public Long getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(Long roomId) {
+        this.roomId = roomId;
+    }
 
     public ScoreHistory toEntity(User_info user) {
         return new ScoreHistory(type, points, startName, endName, distance, time, user);
+    }
+
+    @Override
+    public String toString() {
+        return "ScoreHistoryDTO [type=" + type + ", points=" + points + ", time=" + time + ", startName=" + startName + ", endName=" + endName + ", distance=" + distance + ", roomId=" + roomId + "]";
     }
 }

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, maximum-scale=1, user-scalable=no">
+    <title>경주 결과</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .container {
+            width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .button-container {
+            float: right;
+        }
+
+        .button-container2 {
+            float: left;
+        }
+
+        #button {
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        
+
+        #button3:hover {
+            transform: scale(1.05); 
+        } 
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .room-card {
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: left;
+            position: relative;
+        }
+
+        .room-card h2 {
+            margin: 0 0 10px 0;
+        }
+
+        .room-card p {
+            margin: 5px 0;
+        }
+
+        .back-button2 {
+            position: relative;
+            float: right;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #ccc; /* 회색 구분선 */
+            margin: 20px 0; /* 상하 간격 */
+            margin-top: 90px;
+        }
+
+        .delete-button {
+            cursor: pointer;
+            color: lightgray;
+            font-weight: bold;
+            margin-left: 10px;
+            float: right;
+        }
+
+        .delete-button:hover {
+            color: red;
+        }
+
+        .profile-container {
+            display: flex;
+            align-items: center;
+            text-align: left;
+            margin-top: 20px;
+        }
+                
+        .leader-info {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            text-align: left;
+            font-size: 20px;
+            /* margin-left: 10px; */
+        }
+        
+        .profile-img {
+            margin-right: 10px;
+        }
+        
+
+
+        .capacity {
+            position: absolute;
+            bottom: 10px;
+            right: 25px;
+            font-size: 50px;
+            color: #007bff;
+        }
+        
+        .capacity .participants {
+            color: lightgray;
+        }
+        
+        .capacity .total {
+            color: #007bff;
+        }
+
+        .capacity .full-capacity {
+            color: #007bff;
+        }
+
+        .path {
+            position: relative; 
+            padding: 10px;
+            text-align: center; 
+            align-items: center;
+
+        }
+        
+        .capacity #button {
+            position: absolute;
+            background-color: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+            bottom: 55px;
+            right: 0px;
+            width: 90px;
+        }
+
+        
+        .capacity #button2 {
+            font-family: 'Pretendard';
+            border-radius: 15px;
+            background-color: white;
+            cursor: pointer;
+            border: none;
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            transition: all 0.1s ease;
+            position: absolute;
+            background-color: gray;
+            color: white;
+            bottom: 55px;
+            right: 0px;
+            width: 90px;
+        }
+
+        #button2:hover {
+            background-color : #007bff;
+            transform: scale(1.05);
+            transform: color 0.5s;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+        }
+
+        .transparent {
+            opacity: 0.5;
+        }
+
+        
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <button type="button" th:onclick="|window.location.href='@{/myCrew}'|" class="back-button2"><img src="/img/arrow.png"></button>
+        <h2>
+            <img src="/img/trophy4.png" style="margin-top: 40px; width: 100px; align-items: center;">
+        </h2>
+        <hr class="divider">
+
+        <div th:if="${raceResults.isEmpty()}">
+            <p>경주 기록이 없습니다.</p>
+        </div>
+        <div th:unless="${raceResults.isEmpty()}">
+            <table>
+                <thead>
+                    <tr>
+                        <th>경주 ID</th>
+                        <th>유저 ID</th>
+                        <th>유저 이름</th>
+                        <th>순위</th>
+                        <th>점수</th>
+                        <th>출발지</th>
+                        <th>도착지</th>
+                        <th>거리 (km)</th>
+                        <th>경주 종료 시간</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="result : ${raceResults}">
+                        <td th:text="${result.room.id}"></td>
+                        <td th:text="${result.userId}"></td>
+                        <td th:text="${result.userName}"></td>
+                        <td th:text="${result.ranking}"></td>
+                        <td th:text="${result.points}"></td>
+                        <td th:text="${result.startLocation}"></td>
+                        <td th:text="${result.destination}"></td>
+                        <td th:text="${result.distance}"></td>
+                        <td th:text="${#temporals.format(result.raceEndTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</body>
+<script th:if="${message}">
+    alert('[[${message}]]');
+</script>
+
+</html>

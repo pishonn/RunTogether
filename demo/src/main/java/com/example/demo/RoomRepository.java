@@ -26,4 +26,11 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     @Query("SELECT MAX(r.id) FROM Room r WHERE r.crew.id = :crewId")
     Long findHighestRoomIdInCrew(@Param("crewId") Long crewId);
+
+    @Query("SELECT r FROM Room r LEFT JOIN FETCH r.participantsReady WHERE r.id = :roomId")
+    Optional<Room> findByIdWithParticipantsReady(@Param("roomId") Long roomId);
+
+    
+
+
 }

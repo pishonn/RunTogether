@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, maximum-scale=1, user-scalable=no">
     <title>경주하기</title>
     <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <style>
         .container {
             width: 400px;
@@ -20,6 +22,10 @@
             float: right;
         }
 
+        .button-container2 {
+            float: left;
+        }
+
         #button {
             background-color: #007bff;
             color: white;
@@ -28,6 +34,19 @@
             border: none;
             cursor: pointer;
         }
+
+        #button3 {
+            padding: 0; /* 버튼의 패딩 제거 */
+            background-color: transparent;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        #button3:hover {
+            transform: scale(1.05); 
+        } 
 
         .profile-img {
             width: 40px;
@@ -179,6 +198,11 @@
         <div class="button-container">
             <button th:onclick="|window.location.href='@{/roomCreate/{id}(id=${crew.id})}'|" id="button">+ 방 만들기</button>
         </div>
+        <div class="button-container2">
+            <button title="경주 기록" th:onclick="|window.location.href='@{/raceResult}'|" id="button3">
+                <img src="/img/trophy4.png" style="width: 30px; margin-bottom: -30px; margin-left:10px;">
+            </button>
+        </div>
         <hr class="divider">
         <div th:if="${rooms.isEmpty()}" style="color: gray; margin-top: 40px; margin-bottom: 20px;">아직 생성된 방이 없습니다.</div>
         
@@ -223,6 +247,10 @@
     alert('[[${message}]]');
 </script>
 <script th:inline="javascript">
+
+    var crewId = /*[[${crewId}]]*/ '[[${crewId}]]';
+    var userId = /*[[${userId}]]*/ '[[${userId}]]';
+
     document.addEventListener('DOMContentLoaded', function() {
         const button = document.getElementById('button2');
 
@@ -238,6 +266,42 @@
             });
         }
     });
+</script>
+<script>
+    var stompClient = null;
+
+    function connect() {
+        var socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+    
+            stompClient.subscribe('/topic/startRace/' + crewId, function (message) {
+                console.log("startRace message received:", message.body);
+                location.reload();
+            });
+    
+            stompClient.subscribe('/topic/participantUpdate/' + crewId, function (message) {
+                console.log("Participant update message received:", message.body);
+                if (!message.body.userId === userId) {
+                    location.reload();
+                }
+            });
+    
+            stompClient.subscribe('/topic/roomUpdate/' + crewId, function (message) {
+                console.log("Room update message received:", message.body);
+                location.reload();
+            });
+    
+        }, function (error) {
+            console.log('STOMP error: ' + error);
+        });
+    }
+    
+
+    window.onload = function () {
+        connect();
+    };
 </script>
 
 </html>

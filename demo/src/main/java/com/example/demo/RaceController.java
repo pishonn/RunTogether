@@ -9,7 +9,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,6 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.http.HttpStatus;
 
 @Controller
@@ -36,20 +40,26 @@ public class RaceController {
     private RoomRepository roomRepository;
 
     @Autowired
+    private UserScoreHistoryRepository userScoreHistoryRepository;
+
+
+
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Transactional
     @MessageMapping("/readyStatus")
     public void updateReadyStatus(Map<String, Object> update) {
-        Long userId = Long.valueOf(update.get("userId").toString());
-        Long roomId = Long.valueOf(update.get("roomId").toString());
-        boolean ready = Boolean.valueOf(update.get("ready").toString());
 
-        Optional<User_info> optionalUser = userRepository.findById(userId);
-        Optional<Room> optionalRoom = roomRepository.findById(roomId);
+        Long userId = Long.parseLong(update.get("userId").toString());
+        Long roomId = Long.parseLong(update.get("roomId").toString());
+        boolean ready = Boolean.parseBoolean(update.get("ready").toString());
 
-        if (optionalUser.isPresent() && optionalRoom.isPresent()) {
-            User_info user = optionalUser.get();
-            Room room = optionalRoom.get();
+
+        User_info user = userRepository.findById(userId).orElse(null);
+        Room room = roomRepository.findByIdWithParticipantsReady(roomId).orElse(null);
+
+        if (user != null && room != null && room.getParticipants().contains(user)) {
 
             if (ready) {
                 room.addParticipantsReady(user);
@@ -59,20 +69,28 @@ public class RaceController {
 
             roomRepository.save(room);
 
-            // 브로드캐스트할 데이터를 구성합니다.
+            // 브로드캐스트할 데이터를 구성
             Map<String, Object> response = new HashMap<>();
             response.put("userId", user.getId());
             response.put("ready", ready);
 
-            // 모든 클라이언트에게 업데이트를 브로드캐스트합니다.
-            messagingTemplate.convertAndSend("/topic/readyStatus", response);
+
+            // 모든 클라이언트에게 업데이트를 브로드캐스트
+            System.out.println("업데이트1 : " + response);
+            messagingTemplate.convertAndSend("/topic/readyStatus/" + roomId, response);
         } else {
-            System.err.println("Invalid user or room ID");
+            System.err.println("방이 없습니다.");
         }
     }
 
     @PostMapping("/toggleReadyStatus")
-    public ResponseEntity<?> toggleReadyStatus(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> toggleReadyStatus(@RequestBody Map<String, Object> request, HttpServletResponse httpResponse) {
+
+        httpResponse.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+        httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        httpResponse.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        httpResponse.setHeader("Pragma", "no-cache");
+
         Long userId = Long.valueOf(request.get("userId").toString());
         Long roomId = Long.valueOf(request.get("roomId").toString());
         boolean ready = Boolean.valueOf(request.get("ready").toString());
@@ -94,6 +112,7 @@ public class RaceController {
             Map<String, Object> response = new HashMap<>();
             response.put("userId", user.getId());
             response.put("ready", ready);
+            System.out.println("업데이트2 : " + response);
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid user or room ID");
@@ -103,7 +122,7 @@ public class RaceController {
     @GetMapping("/raceRoom/{id}")
     public String getRaceRoomPage(@PathVariable Long id, Model model, HttpSession session, RedirectAttributes redirectAttributes) {
         String userId = (String) session.getAttribute("userId");
-        System.out.println("userId dasdasdas: " + userId);
+        System.out.println("userId : " + userId);
 
         if (userId == null) {
             redirectAttributes.addFlashAttribute("message", "로그인이 필요합니다.");
@@ -123,12 +142,19 @@ public class RaceController {
         model.addAttribute("userRoomId", userRoom.isPresent() ? userRoom.get().getId() : null);
         model.addAttribute("crew", crew);
         model.addAttribute("rooms", rooms);
+        model.addAttribute("crewId", crew.getId());
+        model.addAttribute("userId", user.getId());
 
         return "raceRoom"; 
     }
 
     @GetMapping("/roomCreate/{crewId}")
-    public String getCreateRoomPage(@PathVariable Long crewId, Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String getCreateRoomPage(@PathVariable Long crewId, Model model, HttpSession session, RedirectAttributes redirectAttributes, HttpServletResponse httpResponse) {
+
+        httpResponse.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+        httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        httpResponse.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        httpResponse.setHeader("Pragma", "no-cache");
 
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
@@ -144,7 +170,7 @@ public class RaceController {
         }
 
         Long uid = user.getId();
-        int maxParticipants = crew.getCapacity();
+        int maxParticipants = crew.getMemberCount();
         model.addAttribute("crewId", crewId);
         model.addAttribute("userId", uid);
         model.addAttribute("maxParticipants", maxParticipants);
@@ -163,7 +189,12 @@ public class RaceController {
 
     @PostMapping("/roomCreate/{crewId}")
     public String createRoom(@PathVariable Long crewId, @RequestParam Long userId, @RequestParam int capacity, 
-    @RequestParam String startLocation, @RequestParam String destination, @RequestParam double distance, @RequestParam String placeData, RedirectAttributes redirectAttributes, Model model) {
+    @RequestParam String startLocation, @RequestParam String destination, @RequestParam double distance, @RequestParam String placeData, RedirectAttributes redirectAttributes, Model model, HttpServletResponse httpResponse) {
+
+        httpResponse.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+        httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        httpResponse.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        httpResponse.setHeader("Pragma", "no-cache");
 
         User_info admin = userRepository.findById(userId).orElse(null);
         Crew crew = crewRepository.findById(crewId).orElse(null);
@@ -210,12 +241,20 @@ public class RaceController {
         admin.setRoom(room); 
         roomRepository.save(room);
 
-        redirectAttributes.addFlashAttribute("message", "방이 생성되었습니다.");
-        return "redirect:/raceRoom/" + crewId;
+        messagingTemplate.convertAndSend("/topic/roomUpdate/" + crewId, "Room created");
+
+        redirectAttributes.addFlashAttribute("message", "방이 생성되었습니다. 대기 페이지로 이동하겠습니다!");
+        return "redirect:/userDetails";
     }
 
     @GetMapping("/roomDelete/{crewId}/{roomId}")
-    public String deleteRoom(@PathVariable Long crewId, @PathVariable Long roomId, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String deleteRoom(@PathVariable Long crewId, @PathVariable Long roomId, HttpSession session, RedirectAttributes redirectAttributes, HttpServletResponse httpResponse) {
+
+        httpResponse.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+        httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        httpResponse.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        httpResponse.setHeader("Pragma", "no-cache");
+
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
             redirectAttributes.addFlashAttribute("message", "로그인이 필요합니다.");
@@ -235,16 +274,38 @@ public class RaceController {
             return "redirect:/raceRoom/" + crewId;
         }
 
+        else if (room.isRaceStarted()) {
+            redirectAttributes.addFlashAttribute("message", "레이스가 시작된 방은 삭제할 수 없습니다.");
+            return "redirect:/raceRoom/" + crewId;
+        }
+
         roomRepository.unsetRoomForUsers(roomId);
-        roomRepository.deleteById(roomId);
+        raceService.deleteRoom(roomId, crewId);
+
+        //messagingTemplate.convertAndSend("/topic/roomUpdate/" + crewId, "Room deleted");
+
         redirectAttributes.addFlashAttribute("message", "방이 삭제되었습니다.");
         return "redirect:/raceRoom/" + crewId;
     }
 
-    @GetMapping("/roomJoin/{crewId}/{roomId}")
-    public String joinRoom(@PathVariable Long crewId, @PathVariable Long roomId, HttpSession session, RedirectAttributes redirectAttributes) {
-        String userId = (String) session.getAttribute("userId");
+    // @MessageMapping("/participantUpdate")
+    // public void participantUpdate(Map<String, Object> update) {
+    //     Long roomId = Long.parseLong(update.get("roomId").toString());
+    //     Long crewId = Long.parseLong(update.get("crewId").toString());
+    //     messagingTemplate.convertAndSend("/topic/participantUpdate" + roomId, update);
+    //     messagingTemplate.convertAndSend("/topic/participantUpdate" + crewId, update);
+    // }
 
+    @GetMapping("/roomJoin/{crewId}/{roomId}")
+    public String joinRoom(@PathVariable Long crewId, @PathVariable Long roomId, HttpSession session, RedirectAttributes redirectAttributes, HttpServletResponse httpResponse) {
+
+        httpResponse.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+        httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        httpResponse.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        httpResponse.setHeader("Pragma", "no-cache");
+
+        String userId = (String) session.getAttribute("userId");
+        Crew crew = crewRepository.findById(crewId).orElse(null);
         if (userId == null) {
             redirectAttributes.addFlashAttribute("message", "로그인이 필요합니다.");
             return "redirect:/login";
@@ -255,6 +316,12 @@ public class RaceController {
 
         Room room = roomRepository.findById(roomId).orElse(null);
 
+        if (!crew.isMember(user))
+        {
+            redirectAttributes.addFlashAttribute("message", "크루 멤버만 접근 가능합니다.");
+            return "redirect:/mainMenu";
+        }
+
         if (room == null) {
             redirectAttributes.addFlashAttribute("message", "방 정보가 없습니다.");
             return "redirect:/raceRoom/" + crewId;
@@ -262,6 +329,7 @@ public class RaceController {
 
         else if (room.isRaceStarted()) {
             redirectAttributes.addFlashAttribute("message", "레이스가 시작된 방은 참가할 수 없습니다.");
+            return "redirect:/raceRoom/" + crewId;
         }
 
         else if (room.getParticipants().contains(user)) {
@@ -277,12 +345,28 @@ public class RaceController {
         
 
         raceService.joinRoom(crewId, roomId, uid);
+        Map<String, Object> response = new HashMap<>();
+        response.put("userId", user.getId());
+        response.put("profileImage", user.getProfileImage());
+        response.put("isReady", room.getParticipantsReady().contains(user));
+        response.put("name", user.getName());
+        response.put("join", true);  // 참가 여부
+        messagingTemplate.convertAndSend("/topic/participantUpdate/" + roomId, response);
+        messagingTemplate.convertAndSend("/topic/participantUpdate/" + crewId, response);
+
+
         redirectAttributes.addFlashAttribute("message", "방에 참가되었습니다. 대기 페이지로 이동하겠습니다!");
-        return "redirect:/raceRoom/" + crewId;
+        return "redirect:/userDetails";
     }
 
     @GetMapping("/roomLeave/{crewId}/{roomId}")
-    public String leave(@PathVariable Long crewId, @PathVariable Long roomId, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String leave(@PathVariable Long crewId, @PathVariable Long roomId, HttpSession session, RedirectAttributes redirectAttributes, HttpServletResponse httpResponse) {
+
+        httpResponse.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+        httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        httpResponse.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        httpResponse.setHeader("Pragma", "no-cache");
+
         String userId = (String) session.getAttribute("userId");
 
         if (userId == null) {
@@ -316,27 +400,139 @@ public class RaceController {
 
         
 
-        raceService.leaveRoom(crewId, roomId, uid);
-        redirectAttributes.addFlashAttribute("message", "방을 나갔습니다.");
+        Room updatedRoom = raceService.leaveRoom(crewId, roomId, uid);
+        if (updatedRoom == null) {
+            redirectAttributes.addFlashAttribute("message", "마지막 참가자가 방을 떠나 방이 삭제되었습니다.");
+        } else {
+            redirectAttributes.addFlashAttribute("message", "방을 나갔습니다.");
+        }
+
+      
+        // Map<String, Object> message = new HashMap<>();
+        // message.put("userId", user.getId());
+        // message.put("join", false);
+
+        // messagingTemplate.convertAndSend("/topic/participantUpdate/" + roomId, message);
+        // messagingTemplate.convertAndSend("/topic/participantUpdate/" + crewId, message);
+        
+
         return "redirect:/raceRoom/" + crewId;
     }
 
-    @PostMapping("/raceReady/{crewId}/{roomId}")
-    public ResponseEntity<Room> ready(@PathVariable Long crewId, @PathVariable Long roomId, @RequestParam Long userId) {
-        Room room = raceService.ready(crewId, roomId, userId);
-        return ResponseEntity.ok(room);
+    @MessageMapping("/startRace")
+    public void startRace(Map<String, Object> message) {
+        // 모든 참가자에게 메시지 전송
+        Long roomId = Long.parseLong(message.get("roomId").toString());
+        Long crewId = Long.parseLong(message.get("crewId").toString());
+        messagingTemplate.convertAndSend("/topic/startRace/" + roomId, message);
+        messagingTemplate.convertAndSend("/topic/startRace/" + crewId, message);
+
     }
 
-    @PostMapping("/raceStart/{crewId}/{roomId}")
-    public ResponseEntity<Room> startRace(@PathVariable Long crewId, @PathVariable Long roomId) {
-        Room room = raceService.startRace(crewId, roomId);
-        return ResponseEntity.ok(room);
+    @PostMapping("/startRace")
+    public ResponseEntity<?> startRace2(@RequestBody Map<String, Object> request, HttpServletResponse httpResponse) {
+
+        httpResponse.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+        httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        httpResponse.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        httpResponse.setHeader("Pragma", "no-cache");
+
+        Long roomId = Long.valueOf(request.get("roomId").toString());
+        Optional<Room> optionalRoom = roomRepository.findById(roomId);
+        if (optionalRoom.isPresent()) {
+            Room room = optionalRoom.get();
+            room.setRaceStarted(true);
+            room.setParticipantsAtRaceStart(room.getParticipantsCount());
+            roomRepository.save(room);
+
+            // 반환되는 JSON 응답을 간단하게 유지
+            Map<String, Object> response = new HashMap<>();
+            response.put("roomId", roomId);
+            response.put("isRaceStarted", true);
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Room not found");
+        }
     }
 
-    @PostMapping("/raceFinish/{crewId}/{roomId}")
-    public ResponseEntity<Room> finishRace(@PathVariable Long crewId, @PathVariable Long roomId) {
-        Room room = raceService.finishRace(crewId, roomId);
-        return ResponseEntity.ok(room);
+    
+
+    @GetMapping("/raceState/{roomId}")
+    public ResponseEntity<?> getRaceState(@PathVariable Long roomId) {
+        Optional<Room> optionalRoom = roomRepository.findById(roomId);
+        if (optionalRoom.isPresent()) {
+            Room room = optionalRoom.get();
+            Map<String, Object> response = new HashMap<>();
+            response.put("isRaceStarted", room.isRaceStarted());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Race state not found");
+        }
+    }
+
+
+    @GetMapping("/raceResult")
+    public String getRaceResults(Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+        String uid = (String) session.getAttribute("userId");
+        
+       
+
+        if (uid == null) {
+            redirectAttributes.addFlashAttribute("message", "로그인이 필요합니다.");
+            return "redirect:/login";
+        }
+
+        User_info user = userRepository.findByUserId(uid).orElse(null);
+
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("message", "유저 정보를 찾을 수 없습니다.");
+            return "redirect:/login";
+        }
+
+
+        
+
+        
+        Crew crew = user.getCrew();
+        
+        if (crew == null) {
+            model.addAttribute("message", "크루 정보를 찾을 수 없습니다.");
+            return "mainMenu";
+        }
+
+        Long userId = user.getId();
+        //Long crewId = crew.getId();
+
+        if (!crew.isMember(user)) {
+            redirectAttributes.addFlashAttribute("message", "크루 멤버만 접근 가능합니다.");
+            return "redirect:/mainMenu";
+        }
+
+        System.out.println("User id: " + userId);
+        Set<UserScoreHistory> userScoreHistories = userScoreHistoryRepository.findByUserAndCrew(user, crew);
+        System.out.println("User score histories: " + userScoreHistories);
+
+        if (userScoreHistories.isEmpty()) {
+            System.out.println("No user score histories found.");
+        }
+
+        Map<Long, RoomScoreHistory> roomScoreHistoryMap = new HashMap<>();
+        for (UserScoreHistory userScoreHistory : userScoreHistories) {
+            System.out.println("User score history: " + userScoreHistory);
+            RoomScoreHistory roomScoreHistory = userScoreHistory.getRoomScoreHistory();
+            if (roomScoreHistory != null) {
+                roomScoreHistoryMap.putIfAbsent(roomScoreHistory.getId(), roomScoreHistory);
+            } else {
+                System.out.println("RoomScoreHistory is null for UserScoreHistory id: " + userScoreHistory.getId());
+            }
+        }
+
+        List<RoomScoreHistory> raceResults = new ArrayList<>(roomScoreHistoryMap.values());
+        System.out.println("Race results: " + raceResults);
+        model.addAttribute("raceResults", raceResults);
+        model.addAttribute("crew", crew);
+
+        return "raceResult";
     }
 
 }

@@ -11,6 +11,7 @@ let userKeyword = null;
 let minDistance = 0.2;
 let searchRadius = 1000;
 
+
 function calculateWalkTime(Km) {
     const avg = 83; 
     const meters = Km * 1000; 
@@ -238,7 +239,7 @@ function processResults2(firstPlace) {
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                    // 이제 userLocation이 설정되었으므로 여기서 firstPlace를 처리합니다.
+                    // 이제 userLocation이 설정되었으므로 여기서 firstPlace를 처리
                     handleFirstPlace(firstPlace);
                 }, 
                 function() {
@@ -249,7 +250,7 @@ function processResults2(firstPlace) {
             handleError(false, infoWindow, map.getCenter());
         }
     } else {
-        // userLocation이 이미 설정되어 있으면 바로 처리합니다.
+        // userLocation이 이미 설정되어 있으면 바로 처리
         handleFirstPlace(firstPlace, userLocation);
     }
 }
@@ -289,35 +290,51 @@ function handleFirstPlace(firstPlace) {
 
 
 function naverMap(endName, elat, elng, km) {
-    geocoder.geocode({'location': userLocation}, function(results, status) {
-        if (status === google.maps.GeocoderStatus.OK && results[0]) {
-            const startPlaceName = results[0].formatted_address;
-            const url = createNaverDirectionsUrl(startPlaceName, endName, elng, elat);
-
-            window.open(url, '_blank');
-            
-            const $limitTime = document.getElementById('limitTime')
-            const totalMinutes = calculateWalkTime(km); 
-            totalSeconds = totalMinutes * 60; 
-            originalSec = totalSeconds;
-            timerInterval = setInterval(function() {
-                updateTimer($limitTime, elat, elng, km, startPlaceName, endName);
-            }, 1000);
-
-            const $resultsDiv = document.getElementById('results');
-            $resultsDiv.innerHTML = '';
-            const placeElement = document.createElement('div');
-            placeElement.innerHTML = `<button id="button" onclick="verify(${elat}, ${elng}, ${km}, '${startPlaceName}', '${endName}')">도착 확인!</button><br>`;
-            $resultsDiv.appendChild(placeElement);
-
-            getScore = false;
-            
-
+    if (room) {
+        if (userData.id === room.admin.id) {
+            if (room.participantsReady.length === room.participants.length - 1) {
+                // 모든 참가자가 준비되었을 때 실행되는 코드
+                room.participants.forEach(participant => {
+                    // 모든 참가자들에게 else 부분의 코드 실행을 위한 메시지 전송
+                    sendStartRaceMessage(participant.id, endName, elat, elng, km);
+                    startRaceHandler();
+                });
+            } else {
+                alert("모든 참가자가 준비되지 않았습니다.");
+            }
         } else {
-            console.error(status);
+            alert("방의 리더만 시작할 수 있습니다.");
         }
-    });
+    } else {
+        geocoder.geocode({'location': userLocation}, function(results, status) {
+            if (status === google.maps.GeocoderStatus.OK && results[0]) {
+                const startPlaceName = results[0].formatted_address;
+                const url = createNaverDirectionsUrl(startPlaceName, endName, elng, elat);
+
+                window.open(url, '_blank');
+                
+                const $limitTime = document.getElementById('limitTime');
+                const totalMinutes = calculateWalkTime(km); 
+                totalSeconds = totalMinutes * 60; 
+                originalSec = totalSeconds;
+                timerInterval = setInterval(function() {
+                    updateTimer($limitTime, elat, elng, km, startPlaceName, endName);
+                }, 1000);
+
+                const $resultsDiv = document.getElementById('results');
+                $resultsDiv.innerHTML = '';
+                const placeElement = document.createElement('div');
+                placeElement.innerHTML = `<button id="button" onclick="verify(${elat}, ${elng}, ${km}, '${startPlaceName}', '${endName}')">도착 확인!</button><br>`;
+                $resultsDiv.appendChild(placeElement);
+
+                getScore = false;
+            } else {
+                console.error(status);
+            }
+        });
+    }
 }
+
 
 function updateTimer($limitTime, elat, elng, km, sName, eName) {
     
@@ -389,14 +406,25 @@ function verify(elat, elng, km, sName, eName) {
                 
                 
                 if (dist < 100) {
-                    addScore(type='도착 점수', additional, additional2, points=points, totalSeconds, sName, eName, km);
+
+                    if (room) {
+                        addScore3(type='경주 점수', additional, additional2, points=points, totalSeconds, sName, eName, km);
+                    } else {
+                        addScore(type='도착 점수', additional, additional2, points=points, totalSeconds, sName, eName, km);
+                    }
                 } else if (totalSeconds > 0) {
                     alert('아직 도착하지 않으셨네요! 목적지의 200m 반경 안으로 이동해주세요.');
-                } else {
-                    if ((km-dist)/km > 0.5){
-                        addscore2(type='노력 점수', sName, eName);
-                    }
                 }
+                // } else {
+                //     if ((km-dist)/km > 0.5){
+
+                //         if (room) {
+                //             addScore4(type='경주 점수', sName, eName);
+                //         } else {
+                //             addscore2(type='노력 점수', sName, eName);
+                //         }
+                //     }
+                // }
                 
             }, 
             function() {
@@ -426,6 +454,7 @@ function addScore(type, additional, additional2, points, diff, sName, eName, km)
     }
 
     const scoreData = {
+        roomId: null,
         type: type,
         points: points,
         sName: sName,
@@ -486,7 +515,65 @@ function addscore2(type, sName, eName) {
     getScore = true;
 }
 
+function addScore3(type, additional, additional2, points, diff, sName, eName, km) {
 
+    console.log("km : " + km);
+    const now = new Date();
+    let msg = '';
+
+    if (additional > 0) {
+        msg += `\n${diff}초 빨리 도착하셨네요!`;
+    }
+    if (additional2 > 0) {
+        msg += msg ? `\n게다가 5km 이상의 먼 거리를 이동하셨네요!` : `\n5km 이상의 먼 거리를 이동하셨네요!`;
+    }
+    if (msg) {
+        msg += `\n기본 점수에 10점에 가산점 ${points - 10}점을 추가해드릴게요!`;
+    }
+
+    console.log("room :", room)
+    const scoreData = {
+        type: type,
+        points: points,
+        sName: sName,
+        eName: eName,
+        distance: Number(km),
+        time: `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`,
+        roomId: room.id
+    };
+    console.log(scoreData);
+    fetch('/addScore', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(scoreData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        const totalPoints = data.totalPoints;
+        const rank = data.rank;
+        const rankBonus = data.rankBonus;
+        console.log('Success:', data);
+
+        const finalPoints = points + rankBonus;
+
+        document.getElementById('userPoints').innerText = totalPoints;
+        alert(`축하합니다! ${rank}위로 도착했습니다!\n${msg}\n순위 보너스 ${rankBonus}점 추가로 ${type} 총 ${finalPoints}점을 획득하였습니다!`);
+    })
+    .catch(error => console.error('Error:', error));
+
+    clearInterval(timerInterval);
+    timerInterval = null;
+    const $limitTime = document.getElementById('limitTime');
+    $limitTime.innerHTML = `<div>도착 완료!</div>`;
+
+    getScore = true;
+
+    console.log("userData :", userData);
+    // var url = `/raceResult/${crewId}/${userData.Id}`;
+    // window.location.href = url;
+}
 
 
 function minusIndex() {
@@ -552,7 +639,7 @@ function applySetting() {
     fetch('/updateSettings', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json;'
         },
         body: JSON.stringify(userData)
     })

@@ -1,11 +1,13 @@
 package com.example.demo;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -44,7 +46,9 @@ public class Room {
     private boolean isRaceStarted;
 
     private double distance;
-    
+
+    private boolean isRaceEnded;
+
     @Column(columnDefinition = "LONGTEXT") // JSON 데이터를 저장할 필드 길이 늘림
     private String placeData;
     //@ElementCollection
@@ -62,6 +66,11 @@ public class Room {
     @OneToMany(mappedBy = "room")
     private List<User_info> participants;
 
+    private int participantsAtRaceStart;
+    
+    @OneToMany(mappedBy = "room", cascade = CascadeType.PERSIST)
+    private Set<RoomScoreHistory> roomScoreHistories = new HashSet<>();
+    
     // Getters and Setters
     public Long getId() {
         return id;
@@ -171,8 +180,32 @@ public class Room {
         this.placeData = placeData;
     }
 
+    public boolean isRaceEnded() {
+        return isRaceEnded;
+    }
+
+    public void setRaceEnded(boolean isRaceEnded) {
+        this.isRaceEnded = isRaceEnded;
+    }
+
+    public int getParticipantsAtRaceStart() {
+        return participantsAtRaceStart;
+    }
+
+    public void setParticipantsAtRaceStart(int participantsAtRaceStart) {
+        this.participantsAtRaceStart = participantsAtRaceStart;
+    }
+
+    public Set<RoomScoreHistory> getRoomScoreHistories() {
+        return roomScoreHistories;
+    }
+
+    public void setRoomScoreHistories(Set<RoomScoreHistory> roomScoreHistories) {
+        this.roomScoreHistories = roomScoreHistories;
+    }
+    
     @Override
     public String toString() {
-        return "Room [id=" + id + ", admin=" + admin + ", crew=" + crew + ", createdDate=" + createdDate + ", capacity=" + capacity + ", startLocation=" + startLocation + ", destination=" + destination + ", isRaceStarted=" + isRaceStarted + ", distance=" + distance + ", placeData=" + placeData + "]";
+        return "Room [id=" + id + ", admin=" + admin + ", crew=" + crew + ", createdDate=" + createdDate + ", capacity=" + capacity + ", startLocation=" + startLocation + ", destination=" + destination + ", isRaceStarted=" + isRaceStarted +"]";
     }
 }

@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -20,9 +21,13 @@ public class RoomDTO {
         this.destination = room.getDestination();
         this.distance = room.getDistance();
         this.placeData = room.getPlaceData();
-        this.participants = room.getParticipants();
+        //this.participants = room.getParticipants();
         this.admin = room.getAdmin();
         this.participantsReady = room.getParticipantsReady();
+
+        this.participants = new ArrayList<>(room.getParticipants());
+        this.participants.remove(admin);
+        this.participants.add(0, admin);
     }
 
     // Getters and Setters

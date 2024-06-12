@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -236,6 +237,20 @@ public class User_info {
 
     @Override
     public String toString() {
-        return "User_info [id=" + id + ", name=" + name + ", userId=" + userId + ", pw=" + pw + ", email=" + email + ", profileImage=" + profileImage + ", selectedMode=" + selectedMode + ", selectedPlaces=" + selectedPlaces + ", searchRadius=" + searchRadius + ", minDistance=" + minDistance + ", scoreHistory=" + scoreHistory + ", crew=" + crew + ", totalPoints=" + totalPoints + ", totalDistance=" + totalDistance + "]";
+        return "User_info [id=" + id + ", name=" + name + ", email=" + email + "]";    
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User_info user_info = (User_info) o;
+        return Objects.equals(id, user_info.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+    
 }

@@ -1,13 +1,17 @@
 package com.example.demo;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class RaceService {
@@ -20,6 +24,10 @@ public class RaceService {
 
     @Autowired
     private CrewRepository crewRepository;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
 
     public Room createRoom(Long adminId, Long crewId, int capacity, String startLocation, String destination) {
         User_info admin = userRepository.findById(adminId).orElseThrow(() -> new IllegalArgumentException("Invalid admin Id"));
@@ -41,11 +49,16 @@ public class RaceService {
         return roomRepository.save(room);
     }
 
-    public void deleteRoom(Long crewId, Long roomId) {
-        Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("Invalid crew Id"));
-        Room room = roomRepository.findByIdAndCrew(roomId, crew).orElseThrow(() -> new IllegalArgumentException("Invalid room Id or crew Id"));
-        roomRepository.delete(room);
+    @Transactional
+    public void deleteRoom(Long roomId, Long crewId) {
+        Optional<Room> optionalRoom = roomRepository.findById(roomId);
+        if (optionalRoom.isPresent()) {
+            Room room = optionalRoom.get();
+            roomRepository.delete(room);
+            messagingTemplate.convertAndSend("/topic/roomUpdate/" + crewId, "Room deleted");
+        }
     }
+
 
     public Room joinRoom(Long crewId, Long roomId, Long userId) {
         Crew crew = crewRepository.findById(crewId).orElseThrow(() -> new IllegalArgumentException("Invalid crew Id"));
@@ -75,10 +88,22 @@ public class RaceService {
         room.getParticipants().remove(user);
         user.setRoom(null);
         userRepository.save(user);
+
+        Map<String, Object> message = new HashMap<>();
+        message.put("userId", userId);
+        message.put("join", false);
+        
+        messagingTemplate.convertAndSend("/topic/participantUpdate/" + roomId, message);
+        messagingTemplate.convertAndSend("/topic/participantUpdate/" + crewId, message);
+
+        if (room.getParticipants().isEmpty()) {
+            deleteRoom(roomId, crewId);
+            return null; // Room was deleted
+        }
     
         return roomRepository.save(room);
     }
-
+    
     
     @Transactional
     public Room ready(Long crewId, Long roomId, Long userId) {
