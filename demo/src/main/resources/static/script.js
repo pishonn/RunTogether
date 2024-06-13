@@ -471,16 +471,23 @@ function addScore(type, additional, additional2, points, diff, sName, eName, km)
         body: JSON.stringify(scoreData)
     })
     .then(response => response.json())
-    .then(totalPoints => {
+    .then(data => {
+        const totalPoints = data.totalPoints;
         document.getElementById('userPoints').innerText = totalPoints;
         alert(`${type} ${points}점을 획득하였습니다!${msg}`);
+
+
+        clearInterval(timerInterval);
+        timerInterval = null;
+        const $limitTime = document.getElementById('limitTime');
+        $limitTime.innerHTML = `<div>도착 완료!</div>`;
+
+        var url = `/scoreHistory`;
+        window.location.href = url;
     })
     .catch(error => console.error('Error:', error));
 
-    clearInterval(timerInterval);
-    timerInterval = null;
-    const $limitTime = document.getElementById('limitTime');
-    $limitTime.innerHTML = `<div>도착 완료!</div>`;
+    
 
     getScore = true;
 }
@@ -560,19 +567,20 @@ function addScore3(type, additional, additional2, points, diff, sName, eName, km
 
         document.getElementById('userPoints').innerText = totalPoints;
         alert(`축하합니다! ${rank}위로 도착했습니다!\n${msg}\n순위 보너스 ${rankBonus}점 추가로 ${type} 총 ${finalPoints}점을 획득하였습니다!`);
+
+        clearInterval(timerInterval);
+        timerInterval = null;
+        const $limitTime = document.getElementById('limitTime');
+        $limitTime.innerHTML = `<div>도착 완료!</div>`;
+
+        getScore = true;
+
+        var url = `/raceResult`;
+        window.location.href = url;
     })
     .catch(error => console.error('Error:', error));
 
-    clearInterval(timerInterval);
-    timerInterval = null;
-    const $limitTime = document.getElementById('limitTime');
-    $limitTime.innerHTML = `<div>도착 완료!</div>`;
-
-    getScore = true;
-
-    console.log("userData :", userData);
-    // var url = `/raceResult/${crewId}/${userData.Id}`;
-    // window.location.href = url;
+    
 }
 
 

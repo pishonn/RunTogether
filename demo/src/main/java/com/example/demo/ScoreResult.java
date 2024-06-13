@@ -16,4 +16,12 @@ public class ScoreResult {
     public double getTotalDistance() {
         return totalDistance;
     }
+
+    @Override
+    public String toString() {
+        return "ScoreResult{" +
+                "totalPoints=" + totalPoints +
+                ", totalDistance=" + totalDistance +
+                '}';
+    }
 }

@@ -199,7 +199,7 @@
             <button th:onclick="|window.location.href='@{/roomCreate/{id}(id=${crew.id})}'|" id="button">+ 방 만들기</button>
         </div>
         <div class="button-container2">
-            <button title="경주 기록" th:onclick="|window.location.href='@{/raceResult}'|" id="button3">
+            <button title="레이스 기록" th:onclick="|window.location.href='@{/raceResult}'|" id="button3">
                 <img src="/img/trophy4.png" style="width: 30px; margin-bottom: -30px; margin-left:10px;">
             </button>
         </div>
@@ -283,9 +283,7 @@
     
             stompClient.subscribe('/topic/participantUpdate/' + crewId, function (message) {
                 console.log("Participant update message received:", message.body);
-                if (!message.body.userId === userId) {
-                    location.reload();
-                }
+                location.reload();
             });
     
             stompClient.subscribe('/topic/roomUpdate/' + crewId, function (message) {

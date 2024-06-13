@@ -71,7 +71,7 @@
         <form th:action="@{'/roomCreate/' + ${crewId}}" method="post">
             <input type="hidden" id="userId" name="userId" th:value="${userId}">
             <label id="capacity" for="capacity">정원 :</label>
-            <input type="number" id="capacity" name="capacity" min="1" th:max="${maxParticipants}" required>
+            <input type="number" id="capacity" name="capacity" min="2" th:max="${maxParticipants}" required>
 
             <div id="startLocation" class="locName" name="startLocation"></div>
             <div id="destination" class="locName" name="destination"></div>
@@ -84,10 +84,10 @@
 
             <div id="userDetails">
                 <div id="changeLoc">
-                    <button class="nearLoc" onclick="minusIndex()">
+                    <button class="nearLoc" onclick="minusIndex(event)">
                         <img src="/img/left.png">
                     </button>
-                    <button class="farLoc" onclick="plusIndex()">
+                    <button class="farLoc" onclick="plusIndex(event)">
                         <img src="/img/right.png">
                     </button>
                 </div>
@@ -115,8 +115,8 @@
     const $hiddenLocName = document.getElementById('hiddenDestination');
     const $hiddenDistance = document.getElementById('hiddenDistance');
 
-    function minusIndex() {
-
+    function minusIndex(event) {
+        event.preventDefault();
         if (idx == 0){
             alert("가장 가까운 장소입니다.");
         } else{
@@ -125,8 +125,8 @@
         }
     }
     
-    function plusIndex() {
-        
+    function plusIndex(event) {
+        event.preventDefault();
         if (resultLen == idx+1){
             alert("가장 먼 장소입니다.");
         } else{

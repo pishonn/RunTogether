@@ -8,6 +8,7 @@ public class RoomScoreHistoryDTO {
     private Long roomId;
     private Long adminId;
     private LocalDateTime createdDate;
+    private LocalDateTime startTime; 
     private int participantsCount;
     private String startLocation;
     private String destination;
@@ -79,11 +80,20 @@ public class RoomScoreHistoryDTO {
         this.userScores = userScores;
     }
 
-    public RoomScoreHistory toRoomScoreHistory(Room room, User_info admin) {
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public RoomScoreHistory toRoomScoreHistory() {
         RoomScoreHistory roomScoreHistory = new RoomScoreHistory();
-        roomScoreHistory.setRoom(room);
-        roomScoreHistory.setAdmin(admin);
+        roomScoreHistory.setRoomId(roomId);
+        roomScoreHistory.setAdmin(adminId);
         roomScoreHistory.setCreatedDate(createdDate);
+        roomScoreHistory.setStartTime(startTime);
         roomScoreHistory.setParticipantsCount(participantsCount);
         roomScoreHistory.setStartLocation(startLocation);
         roomScoreHistory.setDestination(destination);
@@ -112,10 +122,12 @@ public class RoomScoreHistoryDTO {
                 "roomId=" + roomId +
                 ", adminId=" + adminId +
                 ", createdDate=" + createdDate +
+                ", startTime=" + startTime +
                 ", participantsCount=" + participantsCount +
                 ", startLocation='" + startLocation + '\'' +
                 ", destination='" + destination + '\'' +
                 ", distance=" + distance +
+                ", userScores=" + userScores +
                 '}';
     }
 }

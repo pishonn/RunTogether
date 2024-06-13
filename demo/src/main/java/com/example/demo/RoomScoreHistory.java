@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "room_score_history")
@@ -16,16 +14,19 @@ public class RoomScoreHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "room_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    private Room room;
+    @Column(name = "room_id", nullable = false)
+    private Long roomId;
 
-    @OneToOne
-    @JoinColumn(name = "admin_id", nullable = false)
-    private User_info admin;
+    @Column(name = "admin_id", nullable = false)
+    private Long admin;
+
+    @ManyToOne
+    @JoinColumn(name = "crew_id", nullable = false)
+    private Crew crew;
 
     private LocalDateTime createdDate;
+    private LocalDateTime startTime; 
+
 
     private int participantsCount;
 
@@ -35,7 +36,7 @@ public class RoomScoreHistory {
 
     private double distance;
 
-    @OneToMany(mappedBy = "roomScoreHistory", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "roomScoreHistory", cascade = CascadeType.ALL)
     private Set<UserScoreHistory> userScores = new HashSet<>()
     ;
     // Getters and Setters
@@ -47,20 +48,20 @@ public class RoomScoreHistory {
         this.id = id;
     }
 
-    public Room getRoom() {
-        return room;
+    public Long getRoomId() {
+        return roomId;
     }
 
-    public void setRoom(Room room) {
-        this.room = room;
+    public void setRoomId(Long roomId) {
+        this.roomId = roomId;
     }
 
   
-    public User_info getAdmin() {
+    public Long getAdmin() {
         return admin;
     }
 
-    public void setAdmin(User_info admin) {
+    public void setAdmin(Long admin) {
         this.admin = admin;
     }
 
@@ -112,5 +113,37 @@ public class RoomScoreHistory {
         this.userScores = userScores;
     }
 
+    public Crew getCrew() {
+        return crew;
+    }
+
+    public void setCrew(Crew crew) {
+        this.crew = crew;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    @Override
+    public String toString() {
+        return "RoomScoreHistory{" +
+                "id=" + id +
+                ", roomId=" + roomId +
+                ", admin=" + admin +
+                ", crew=" + crew +
+                ", createdDate=" + createdDate +
+                ", startTime=" + startTime +
+                ", participantsCount=" + participantsCount +
+                ", startLocation='" + startLocation + '\'' +
+                ", destination='" + destination + '\'' +
+                ", distance=" + distance +
+                ", userScores=" + userScores +
+                '}';
+    }
 
 }

@@ -3,21 +3,22 @@ package com.example.demo;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
+// import org.hibernate.annotations.NotFound;
+// import org.hibernate.annotations.NotFoundAction;
+// import org.hibernate.annotations.OnDelete;
+// import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
-@Table(name = "user_score_history", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"room_score_history_id", "user_id"})
-})
+@Table(name = "user_score_history")
 public class UserScoreHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @NotFound(action = NotFoundAction.IGNORE)
+    //@NotFound(action = NotFoundAction.IGNORE)
+    //@OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "room_score_history_id", nullable = false)
     private RoomScoreHistory roomScoreHistory;
 
@@ -35,7 +36,17 @@ public class UserScoreHistory {
 
     private int rank;
 
+    @Transient
+    private String duration; // 경주 시간을 저장할 임시 필드
+
     // Getters and Setters
+    public String getDuration() {
+        return duration;
+    }
+
+    public void setDuration(String duration) {
+        this.duration = duration;
+    }
 
     public Long getId() {
         return id;
@@ -97,7 +108,6 @@ public class UserScoreHistory {
     public String toString() {
         return "UserScoreHistory{" +
                 "id=" + id +
-                ", roomScoreHistory=" + roomScoreHistory +
                 ", user=" + user +
                 ", crew=" + crew +
                 ", raceEndTime=" + raceEndTime +
@@ -105,5 +115,4 @@ public class UserScoreHistory {
                 ", rank=" + rank +
                 '}';
     }
-
 }

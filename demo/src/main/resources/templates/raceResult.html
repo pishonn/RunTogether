@@ -33,7 +33,14 @@
             cursor: pointer;
         }
 
-        
+        #button3 {
+            padding: 0; /* 버튼의 패딩 제거 */
+            background-color: transparent;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
 
         #button3:hover {
             transform: scale(1.05); 
@@ -71,7 +78,6 @@
             border: none;
             border-top: 1px solid #ccc; /* 회색 구분선 */
             margin: 20px 0; /* 상하 간격 */
-            margin-top: 90px;
         }
 
         .delete-button {
@@ -178,56 +184,78 @@
             opacity: 0.5;
         }
 
+        .race-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .race-start-time {
+            font-size: 16px;
+            color: lightgray;
+            margin-bottom: 10px;
+        }
+
+        .bold-text {
+            font-weight: bold;
+        }
+
         
     </style>
 </head>
 
 <body>
     <div class="container">
-        <button type="button" th:onclick="|window.location.href='@{/myCrew}'|" class="back-button2"><img src="/img/arrow.png"></button>
+        <button type="button" th:onclick="|window.location.href='@{/raceRoom/{id}(id=${crew.id})}'|" class="back-button2"><img src="/img/arrow.png"></button>
         <h2>
-            <img src="/img/trophy4.png" style="margin-top: 40px; width: 100px; align-items: center;">
+            <img src="/img/trophy4.png" style="margin-left: 35px; margin-top: 30px; width: 100px; align-items: center; justify-content: center; position: relative;">
         </h2>
         <hr class="divider">
 
         <div th:if="${raceResults.isEmpty()}">
             <p>경주 기록이 없습니다.</p>
         </div>
+
         <div th:unless="${raceResults.isEmpty()}">
-            <table>
-                <thead>
-                    <tr>
-                        <th>경주 ID</th>
-                        <th>유저 ID</th>
-                        <th>유저 이름</th>
-                        <th>순위</th>
-                        <th>점수</th>
-                        <th>출발지</th>
-                        <th>도착지</th>
-                        <th>거리 (km)</th>
-                        <th>경주 종료 시간</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="result : ${raceResults}">
-                        <td th:text="${result.room.id}"></td>
-                        <td th:text="${result.userId}"></td>
-                        <td th:text="${result.userName}"></td>
-                        <td th:text="${result.ranking}"></td>
-                        <td th:text="${result.points}"></td>
-                        <td th:text="${result.startLocation}"></td>
-                        <td th:text="${result.destination}"></td>
-                        <td th:text="${result.distance}"></td>
-                        <td th:text="${#temporals.format(result.raceEndTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-                    </tr>
-                </tbody>
-            </table>
+            <div th:each="entry : ${raceResults.entrySet()}" class="room-card">
+                <div class="race-header">
+                    <h2>RACE <span th:text="${entry.value[0].roomScoreHistory.roomId}"></span></h2>
+                    <span class="race-start-time" th:text="${#temporals.format(entry.value[0].roomScoreHistory.startTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+                </div>
+                <div class="path">
+                    <p><b>출발 : <span th:text="${entry.value[0].roomScoreHistory.startLocation}"></span></b><br>
+                    <b>도착 : <span th:text="${entry.value[0].roomScoreHistory.destination}"></span></b></p>
+                    <p style="margin-top:10px; margin-bottom:-10px;"><b style="font-size: 20px; margin-top:10px;">
+                    <span th:text="${entry.value[0].roomScoreHistory.distance}"></span>km</b></p>
+                </div>
+                <div th:each="result : ${entry.value}" class="user-score">
+                    <div class="profile-container">
+                        <div class="leader-info" title="리더">
+                            <a style="display:inline-block;" th:href="@{/profile/{id}(id=${result.user.id})}">
+                                <img th:src="@{/img/default-profile{profileImg}.jpg(profileImg=${result.user.profileImage})}" alt="프로필 사진" class="profile-img">
+                            </a>
+                            <b style="margin-bottom:5px;"><span th:text="${result.user.name}"></span></b>
+                        </div>
+                    </div>
+                    <p th:classappend="${userId == result.user.id} ? 'bold-text' : ''">
+                        <span th:text="${userId == result.user.id} ? '내 순위 : ' : '순위 : '"></span>
+                        <span th:text="${result.rank}"></span>위
+                    </p>                    
+                    <p>도착 시간 : <span th:text="${#temporals.format(result.raceEndTime, 'yyyy-MM-dd HH:mm:ss')}"></span></p>
+                    <p>획득 점수 : <span th:text="${result.points}"></span></p>
+                    <p>소요 시간 : <span th:text="${result.duration}"></span></p>
+                </div>
+            </div>
         </div>
+        
+        
+        
+
 
     </div>
 </body>
 <script th:if="${message}">
     alert('[[${message}]]');
 </script>
-
 </html>

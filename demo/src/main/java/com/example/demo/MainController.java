@@ -3,11 +3,11 @@ package com.example.demo;
 
 import java.util.Optional;
 import java.util.Random;
-import java.util.Set;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -692,8 +692,9 @@ public class MainController {
         return "scoreHistory";
     }
     
-    @Transactional
+    
     @PostMapping("/addScore")
+    @Transactional
     public ResponseEntity<?> addScore(@RequestBody ScoreHistoryDTO scoreDto, HttpSession session, HttpServletResponse response) {
         response.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -728,59 +729,76 @@ public class MainController {
                 RoomScoreHistory existingScore = roomScoreHistoryRepository.findByRoomId(room.getId()).orElse(null);
                 System.out.println("existingScore: " + existingScore);
                 if (existingScore == null) {
-                    RoomScoreHistoryDTO roomScoreHistoryDTO = new RoomScoreHistoryDTO();
-                    roomScoreHistoryDTO.setRoomId(room.getId());
-                    roomScoreHistoryDTO.setAdminId(room.getAdmin().getId());
-                    roomScoreHistoryDTO.setCreatedDate(room.getCreatedDate());
-                    roomScoreHistoryDTO.setParticipantsCount(room.getParticipantsAtRaceStart());
-                    roomScoreHistoryDTO.setStartLocation(room.getStartLocation());
-                    roomScoreHistoryDTO.setDestination(room.getDestination());
-                    roomScoreHistoryDTO.setDistance(room.getDistance());
 
-                    RoomScoreHistory roomScoreHistory = roomScoreHistoryDTO.toRoomScoreHistory(room, room.getAdmin());
-                    roomScoreHistoryRepository.save(roomScoreHistory);
+                    System.out.println("기존 방 점수가 없습니다.");
+
+                    existingScore = new RoomScoreHistory();
+                    existingScore.setRoomId(room.getId());
+                    existingScore.setCrew(room.getCrew());
+                    existingScore.setAdmin(room.getAdmin().getId());
+                    existingScore.setCreatedDate(room.getCreatedDate());
+                    existingScore.setParticipantsCount(room.getParticipantsAtRaceStart());
+                    existingScore.setStartLocation(room.getStartLocation());
+                    existingScore.setDestination(room.getDestination());
+                    existingScore.setDistance(room.getDistance());
+                    existingScore.setStartTime(room.getStartTime());
+                    existingScore.setUserScores(new HashSet<>());
+
+                    //roomScoreHistoryRepository.save(existingScore);
+
+                    System.out.println("새로운 방 점수 추가.");
                 }
-                
-                RoomScoreHistory existingScore2 = roomScoreHistoryRepository.findByRoomId(room.getId()).orElse(null);
+
+
+                System.out.println("새로운 유저 점수 추가 시도.");
 
                 UserScoreHistoryDTO userScoreHistoryDto = new UserScoreHistoryDTO();
-                userScoreHistoryDto.setRoomScoreHistory(existingScore2);
+                userScoreHistoryDto.setRoomScoreHistory(existingScore);
                 userScoreHistoryDto.setUser(user);
                 userScoreHistoryDto.setRaceEndTime(LocalDateTime.now());
-                userScoreHistoryDto.setPoints(scoreDto.getPoints());
                 userScoreHistoryDto.setCrew(room.getCrew());
 
-                UserScoreHistory userScoreHistory = userScoreHistoryDto.toUserScoreHistory(existingScore2);
-                userScoreHistoryRepository.save(userScoreHistory);
+                System.out.println("유저 점수 DTO 세팅 완료.");
 
-                Set<UserScoreHistory> userScoresSet = userScoreHistoryRepository.findByRoomScoreHistoryOrderByRaceEndTimeAsc(existingScore);
-                List<UserScoreHistory> userScores = new ArrayList<>(userScoresSet);
+                UserScoreHistory userScoreHistory = userScoreHistoryDto.toUserScoreHistory(existingScore);
+                System.out.println("DTO 엔티티로 변환");
+                existingScore.getUserScores().add(userScoreHistory);
+                System.out.println("existingScore에 추가");
+                
+
+                System.out.println("유저 점수 저장 시도 전 정보 확인" + "userScoreHistory : " + userScoreHistory + "existingScore.getUserScores()" + existingScore.getUserScores() + "userScoreHistory" + userScoreHistory);
+                
+                roomScoreHistoryRepository.saveAndFlush(existingScore);
+                System.out.println("유저 점수 저장 완료.");
+
+                // userScoreHistoryRepository.saveAndFlush(userScoreHistory);
+                // System.out.println("양방향 세팅 완료.");
+
+                List<UserScoreHistory> userScores = new ArrayList<>(existingScore.getUserScores());
                 userScores.sort(Comparator.comparing(UserScoreHistory::getRaceEndTime));
                 System.out.println("userScores.size: " + userScores.size());
                 for (int i = 0; i < userScores.size(); i++) {
                     UserScoreHistory ush = userScores.get(i);
-                    ush.setRank(i + 1);
-                    userScoreHistoryRepository.save(ush); // rank 업데이트
+                    
                     if (ush.getUser().equals(user)) {
                         rank = i + 1;
+                        ush.setRank(rank);
+                        // 순위에 따른 가산점 계산
+                        if (rank == 1) {
+                            rankBonus = 10;
+                        } else if (rank == 2) {
+                            rankBonus = 5;
+                        } else if (rank == 3) {
+                            rankBonus = 3;
+                        }
+
+                        System.out.println("rank : " + rank);
+                        ush.setPoints(scoreDto.getPoints() + rankBonus);
+                        userScoreHistoryRepository.saveAndFlush(ush); // rank 업데이트
                         break;
                     }
                 }
                 
-                
-
-                // 순위에 따른 가산점 계산
-                
-                if (rank == 1) {
-                    rankBonus = 10;
-                } else if (rank == 2) {
-                    rankBonus = 5;
-                } else if (rank == 3) {
-                    rankBonus = 3;
-                }
-
-                
-                System.out.println("rank : " + rank);
 
                 ScoreHistory newScore = new ScoreHistory(
                     scoreDto.getType(),
@@ -818,6 +836,8 @@ public class MainController {
         }
 
         ScoreResult scoreResult = userService.updateScore(user);
+
+        System.out.println("scoreResult : " + scoreResult);
         // 응답에 rank 포함
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("totalPoints", scoreResult.getTotalPoints());
@@ -826,6 +846,8 @@ public class MainController {
 
         return ResponseEntity.ok(responseMap);
     }
+
+
 
 
 

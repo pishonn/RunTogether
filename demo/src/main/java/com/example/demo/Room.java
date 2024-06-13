@@ -1,13 +1,11 @@
 package com.example.demo;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -36,6 +34,7 @@ public class Room {
     private Crew crew;
 
     private LocalDateTime createdDate;
+    private LocalDateTime startTime; 
 
     private int capacity;
 
@@ -68,8 +67,6 @@ public class Room {
 
     private int participantsAtRaceStart;
     
-    @OneToMany(mappedBy = "room", cascade = CascadeType.PERSIST)
-    private Set<RoomScoreHistory> roomScoreHistories = new HashSet<>();
     
     // Getters and Setters
     public Long getId() {
@@ -196,14 +193,14 @@ public class Room {
         this.participantsAtRaceStart = participantsAtRaceStart;
     }
 
-    public Set<RoomScoreHistory> getRoomScoreHistories() {
-        return roomScoreHistories;
+    public LocalDateTime getStartTime() {
+        return startTime;
     }
 
-    public void setRoomScoreHistories(Set<RoomScoreHistory> roomScoreHistories) {
-        this.roomScoreHistories = roomScoreHistories;
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
     }
-    
+   
     @Override
     public String toString() {
         return "Room [id=" + id + ", admin=" + admin + ", crew=" + crew + ", createdDate=" + createdDate + ", capacity=" + capacity + ", startLocation=" + startLocation + ", destination=" + destination + ", isRaceStarted=" + isRaceStarted +"]";

@@ -610,10 +610,10 @@
                 <button title="채팅방" th:if="${crew == null}" style="margin-top: -18px;" onclick="noCrewAlert()">
                     <img src="./img/chat.png">
                 </button>
-                <button title="경주" style="margin-top: -18px; position: relative;" th:if="${crew != null}" th:onclick="|window.location.href='@{/raceRoom/{id}(id=${crew.id})}'|">
+                <button title="레이스" style="margin-top: -18px; position: relative;" th:if="${crew != null}" th:onclick="|window.location.href='@{/raceRoom/{id}(id=${crew.id})}'|">
                     <img src="./img/race.png">
                 </button>
-                <button title="경주" style="margin-top: -18px; position: relative;" th:if="${crew == null}" onclick="noCrewAlert()">
+                <button title="레이스" style="margin-top: -18px; position: relative;" th:if="${crew == null}" onclick="noCrewAlert()">
                     <img src="./img/race.png">
                 </button>
                 <button title="가입 승인" style="margin-top: -18px; position: relative;" onclick="window.location.href='/approvalJoinRequest'" th:if="${crew != null && crew.admin == userData}">

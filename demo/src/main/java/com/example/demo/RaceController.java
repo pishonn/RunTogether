@@ -13,14 +13,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 
@@ -41,7 +45,6 @@ public class RaceController {
 
     @Autowired
     private UserScoreHistoryRepository userScoreHistoryRepository;
-
 
 
     @Autowired
@@ -442,6 +445,7 @@ public class RaceController {
         if (optionalRoom.isPresent()) {
             Room room = optionalRoom.get();
             room.setRaceStarted(true);
+            room.setStartTime(LocalDateTime.now());
             room.setParticipantsAtRaceStart(room.getParticipantsCount());
             roomRepository.save(room);
 
@@ -474,65 +478,65 @@ public class RaceController {
     @GetMapping("/raceResult")
     public String getRaceResults(Model model, HttpSession session, RedirectAttributes redirectAttributes) {
         String uid = (String) session.getAttribute("userId");
-        
-       
-
         if (uid == null) {
             redirectAttributes.addFlashAttribute("message", "로그인이 필요합니다.");
             return "redirect:/login";
         }
 
         User_info user = userRepository.findByUserId(uid).orElse(null);
-
         if (user == null) {
             redirectAttributes.addFlashAttribute("message", "유저 정보를 찾을 수 없습니다.");
             return "redirect:/login";
         }
 
-
-        
-
-        
         Crew crew = user.getCrew();
-        
         if (crew == null) {
             model.addAttribute("message", "크루 정보를 찾을 수 없습니다.");
             return "mainMenu";
         }
-
-        Long userId = user.getId();
-        //Long crewId = crew.getId();
 
         if (!crew.isMember(user)) {
             redirectAttributes.addFlashAttribute("message", "크루 멤버만 접근 가능합니다.");
             return "redirect:/mainMenu";
         }
 
-        System.out.println("User id: " + userId);
-        Set<UserScoreHistory> userScoreHistories = userScoreHistoryRepository.findByUserAndCrew(user, crew);
-        System.out.println("User score histories: " + userScoreHistories);
+        // 유저가 참여한 모든 RoomScoreHistory 찾기
+        Set<UserScoreHistory> userScores = userScoreHistoryRepository.findByUser(user);
+        Set<RoomScoreHistory> participatedRooms = userScores.stream()
+                                                            .map(UserScoreHistory::getRoomScoreHistory)
+                                                            .collect(Collectors.toSet());
 
-        if (userScoreHistories.isEmpty()) {
-            System.out.println("No user score histories found.");
-        }
+        System.out.println("Participated rooms: " + participatedRooms);
 
-        Map<Long, RoomScoreHistory> roomScoreHistoryMap = new HashMap<>();
-        for (UserScoreHistory userScoreHistory : userScoreHistories) {
-            System.out.println("User score history: " + userScoreHistory);
-            RoomScoreHistory roomScoreHistory = userScoreHistory.getRoomScoreHistory();
-            if (roomScoreHistory != null) {
-                roomScoreHistoryMap.putIfAbsent(roomScoreHistory.getId(), roomScoreHistory);
-            } else {
-                System.out.println("RoomScoreHistory is null for UserScoreHistory id: " + userScoreHistory.getId());
+        Map<Long, List<UserScoreHistory>> groupedResults = new LinkedHashMap<>();
+        List<RoomScoreHistory> sortedRooms = new ArrayList<>(participatedRooms);
+        sortedRooms.sort(Comparator.comparing(RoomScoreHistory::getCreatedDate).reversed()); // 내림차순 정렬
+
+        for (RoomScoreHistory room : sortedRooms) {
+            Set<UserScoreHistory> historiesSet = userScoreHistoryRepository.findByRoomScoreHistory(room);
+            List<UserScoreHistory> histories = new ArrayList<>(historiesSet);
+
+            for (UserScoreHistory history : histories) {
+                Duration duration = Duration.between(room.getStartTime(), history.getRaceEndTime());
+                long minutes = duration.toMinutes();
+                long seconds = duration.minusMinutes(minutes).getSeconds();
+                history.setDuration(String.format("%d분 %d초", minutes, seconds));
             }
+
+            histories.sort(Comparator.comparing(UserScoreHistory::getRaceEndTime)); // 내림차순 정렬
+            groupedResults.put(room.getId(), histories);
         }
+    
 
-        List<RoomScoreHistory> raceResults = new ArrayList<>(roomScoreHistoryMap.values());
-        System.out.println("Race results: " + raceResults);
-        model.addAttribute("raceResults", raceResults);
+        System.out.println("Grouped results: " + groupedResults);
+        model.addAttribute("raceResults", groupedResults);
         model.addAttribute("crew", crew);
-
+        model.addAttribute("userId", user.getId());
+        
         return "raceResult";
     }
+
+
+
 
 }

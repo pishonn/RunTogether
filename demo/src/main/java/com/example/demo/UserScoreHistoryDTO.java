@@ -65,8 +65,10 @@ public class UserScoreHistoryDTO {
         userScoreHistory.setRoomScoreHistory(roomScoreHistory);
         userScoreHistory.setUser(this.user);
         userScoreHistory.setRaceEndTime(this.raceEndTime);
-        userScoreHistory.setPoints(this.points);
+        userScoreHistory.setPoints(0);
         userScoreHistory.setCrew(this.crew);
+        userScoreHistory.setRank(0);
+        
         return userScoreHistory;
     }
 }
