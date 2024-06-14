@@ -283,7 +283,12 @@
     
             stompClient.subscribe('/topic/participantUpdate/' + crewId, function (message) {
                 console.log("Participant update message received:", message.body);
-                location.reload();
+                if (!message.body.userId == userId) {
+                    location.reload();
+                } else {
+                    console.log("You are the one who joined the room. No need to reload.");
+                }
+                
             });
     
             stompClient.subscribe('/topic/roomUpdate/' + crewId, function (message) {

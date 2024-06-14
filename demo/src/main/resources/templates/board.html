@@ -212,6 +212,17 @@
                 }
             }
         });
+
+
+        // 제목 길이를 제한하고 "..." 표시
+        const titles = document.querySelectorAll('.post-title');
+        titles.forEach(function(title) {
+            const maxLength = 12; // 원하는 최대 길이 설정
+            if (title.innerText.length > maxLength) {
+                title.innerText = title.innerText.substring(0, maxLength) + '...';
+            }
+        });
+
     });
 </script>
 </html>

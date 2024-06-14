@@ -127,7 +127,8 @@
             <b><p>총 점수 : <span th:text="${user.totalPoints}"></span></p></b>
             <b><p>총 이동거리 : <span th:text="${#numbers.formatDecimal(user.totalDistance, 1, 2)}"></span></p></b>
             <b><p>크루 : 
-                <span th:if="${user.crew != null}" th:text="${user.crew.name}"></span>
+                <a th:if="${user.crew != null}" th:text="${user.crew.name}" th:href="@{/crewProfile/{id}(id=${user.crew.id})}" style="text-decoration: none; color:black;">
+                </a>
                 <span th:if="${user.crew == null}"></span>
             </p></b>
         </div>

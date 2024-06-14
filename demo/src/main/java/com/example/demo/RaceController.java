@@ -318,11 +318,17 @@ public class RaceController {
         Long uid = user.getId();
 
         Room room = roomRepository.findById(roomId).orElse(null);
+        Room existedRoom = roomRepository.roomCotainsUser(crewId, user).orElse(null);
 
         if (!crew.isMember(user))
         {
             redirectAttributes.addFlashAttribute("message", "크루 멤버만 접근 가능합니다.");
             return "redirect:/mainMenu";
+        }
+
+        if (existedRoom != null) {
+            redirectAttributes.addFlashAttribute("message", "이미 참가중인 방이 있습니다.");
+            return "redirect:/raceRoom/" + crewId;
         }
 
         if (room == null) {
@@ -359,6 +365,7 @@ public class RaceController {
 
 
         redirectAttributes.addFlashAttribute("message", "방에 참가되었습니다. 대기 페이지로 이동하겠습니다!");
+        System.out.println("방 참가 성공");
         return "redirect:/userDetails";
     }
 
