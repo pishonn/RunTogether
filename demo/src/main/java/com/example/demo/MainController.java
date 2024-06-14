@@ -217,6 +217,11 @@ public class MainController {
             }
         }
 
+        if (joinRequestRepository.existsByUserId(currentUser.getId())) {
+            redirectAttributes.addFlashAttribute("message", "이미 가입 신청한 크루가 있습니다.");
+            return "redirect:/post/" + postId;
+        }
+
         JoinRequest joinRequest = new JoinRequest(currentUser, adminCrew, LocalDateTime.now());
         adminCrew.addJoinRequest(joinRequest);
         joinRequestRepository.save(joinRequest);
@@ -941,6 +946,12 @@ public class MainController {
             return "redirect:/login";
         }
 
+        if (userRepository.existsByName(user.getName())) {
+            model.addAttribute("message", "이미 존재하는 닉네임입니다.");
+            model.addAttribute("user", user);
+            return "editProfile"; 
+        }
+
         user.setId(currentUser.getId());
         if (userService.updateUserInfo(user, currentUser)) {
             session.setAttribute("userId", userId);
@@ -963,17 +974,30 @@ public class MainController {
         response.setHeader("Pragma", "no-cache");
 
         String userId = (String) session.getAttribute("userId");
-        User_info userData = userRepository.findByUserId(userId).orElse(null);
-        System.out.println("탈퇴 요청 유저 user: " + userData + ", id: " + id);
-        if (userData != null && userData.getId() == id) {
-            boolean success = userService.deleteUser(id);
-            if (success) {
-                session.invalidate();  
-                redirectAttributes.addFlashAttribute("message", "탈퇴가 완료되었습니다. 안녕히 가세요!");
-                return "redirect:/login";  
-            }
+        if (userId == null) {
+            redirectAttributes.addFlashAttribute("message", "세션이 만료되었습니다. 다시 로그인 해주세요.");
+            return "redirect:/login";
         }
-        model.addAttribute("message", "탈퇴에 실패했습니다.");
+
+        User_info userData = userRepository.findByUserId(userId).orElse(null);
+        if (userData == null) {
+            model.addAttribute("message", "사용자를 찾을 수 없습니다.");
+            return "myProfile";
+        }
+
+        if (userData.getId().equals(id)) {
+            boolean success = userService.deleteUser(userData);
+            if (success) {
+                redirectAttributes.addFlashAttribute("message", "탈퇴가 완료되었습니다. 안녕히 가세요!");
+                session.invalidate();
+                return "redirect:/login";
+            } else {
+                model.addAttribute("message", "탈퇴에 실패했습니다.");
+            }
+        } else {
+            model.addAttribute("message", "잘못된 사용자 ID입니다.");
+        }
+
         return "myProfile";
     }
     

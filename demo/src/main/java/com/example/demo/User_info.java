@@ -80,6 +80,10 @@ public class User_info {
 
     private LocalDateTime lastEnteredChatTime;
 
+    @JsonManagedReference
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<JoinRequest> joinRequests = new ArrayList<>();
+
     public Long getId() {
         return id;
     }
@@ -206,6 +210,14 @@ public class User_info {
 
     public void setRoom(Room room) {
         this.room = room;
+    }
+    
+    public List<JoinRequest> getJoinRequests() {
+        return joinRequests;
+    }
+
+    public void setJoinRequests(List<JoinRequest> joinRequests) {
+        this.joinRequests = joinRequests;
     }
     
     public User_info() {

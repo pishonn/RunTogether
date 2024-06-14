@@ -285,9 +285,7 @@
                 console.log("Participant update message received:", message.body);
                 if (!message.body.userId == userId) {
                     location.reload();
-                } else {
-                    console.log("You are the one who joined the room. No need to reload.");
-                }
+                } 
                 
             });
     

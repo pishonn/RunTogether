@@ -11,4 +11,7 @@ public interface JoinRequestRepository extends JpaRepository<JoinRequest, Long> 
     @Query("SELECT COUNT(jr) FROM JoinRequest jr WHERE jr.crew.id = :crewId")
     long countByCrewId(@Param("crewId") Long crewId);
 
+    @Query("SELECT CASE WHEN COUNT(j) > 0 THEN true ELSE false END FROM JoinRequest j WHERE j.user.id = :userId")
+    boolean existsByUserId(@Param("userId") Long userId);
+
 }

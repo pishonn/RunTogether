@@ -13,7 +13,7 @@ public class JoinRequest {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User_info user;
-
+    
     @ManyToOne
     @JoinColumn(name = "crew_id")
     private Crew crew;

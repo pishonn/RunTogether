@@ -4,6 +4,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
+
 
 
 
@@ -13,6 +15,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CrewRepository crewRepository;
 
     // public boolean login(dtoLogin dto, HttpSession session) {
     //     String userId = dto.getUserId();
@@ -39,14 +44,37 @@ public class UserService {
     //     userRepository.save(user);
     //     return true;
     // }
+    
+    @Transactional
+    public boolean deleteUser(User_info user) {
+        if (userRepository.existsById(user.getId())) {
+            
+            // 크루와의 관계 해제
+            if (user.getCrew() != null) {
+                Crew crew = user.getCrew();
+                if (crew.getAdmin() != null && crew.getAdmin().getId().equals(user.getId())) {
+                    for (User_info member : crew.getMembers()) {
+                        member.setCrew(null); // 각 유저의 크루 관계 해제
+                        userRepository.save(member);
+                    }
+                    crew.setAdmin(null);
+                    crewRepository.deleteById(crew.getId());
+                } else {
+                    user.setCrew(null);
+                }
+            }
 
-    public boolean deleteUser(Long userId) {
-        if (userRepository.existsById(userId)) {
-            userRepository.deleteById(userId);
+            // Room과의 관계 해제
+            if (user.getRoom() != null) {
+                user.setRoom(null);
+            }
+
+            userRepository.delete(user); 
             return true;
         }
         return false;
     }
+
     
     public boolean updateUserInfo(User_info newData, User_info existingUser){
         if (existingUser != null) {
